@@ -33,6 +33,7 @@ class LoginActivity : AppCompatActivity() {
         val login = findViewById<Button>(R.id.btnLogin)
         val register = findViewById<TextView>(R.id.txtRegister)
         val googleBtn = findViewById<Button>(R.id.btnGoogleLogin)
+        val phoneBtn = findViewById<Button>(R.id.btnPhoneLogin)
 
         // 🔹 Logowanie email + hasło
         login.setOnClickListener {
@@ -69,6 +70,11 @@ class LoginActivity : AppCompatActivity() {
         googleBtn.setOnClickListener {
             val signInIntent = googleSignInClient.signInIntent
             googleLauncher.launch(signInIntent)
+        }
+
+        // 🔹 Klik Telefon
+        phoneBtn.setOnClickListener {
+            startActivity(Intent(this, PhoneLoginActivity::class.java))
         }
     }
 

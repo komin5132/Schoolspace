@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#1F6ED4</color>
-    <color name="secondary">#4DA3FF</color>
-    <color name="background">#EEF3FA</color>
-    <color name="surface">#FFFFFF</color>
-
-    <color name="text_primary">#1F3C88</color>
-    <color name="text_secondary">#5F6F94</color>
-    <color name="text_hint">#9AA4B2</color>
-
-    <color name="error">#D32F2F</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="primary">#3275D6</color>
+    <color name="background">#F5F7FA</color>
+    <color name="text_primary">#1A1C1E</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
 </resources>
