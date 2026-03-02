@@ -2,6 +2,7 @@ package com.example.schoolspace
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
@@ -9,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.FirebaseException
+import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.*
 import java.util.concurrent.TimeUnit
 
@@ -36,25 +38,22 @@ class PhoneLoginActivity : AppCompatActivity() {
         btnBack = findViewById(R.id.btnBack)
         txtBackToLogin = findViewById(R.id.txtBackToLogin)
 
-        // Powrót do logowania
-        btnBack.setOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
-        }
+        btnBack.setOnClickListener { finish() }
+        txtBackToLogin.setOnClickListener { finish() }
 
-        txtBackToLogin.setOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
-        }
-
-        // 1. Wysyłanie SMS
         btnSendSms.setOnClickListener {
-            val phoneNumber = etPhoneNumber.text.toString() // np. +48123456789
-            if (phoneNumber.isEmpty()) {
-                Toast.makeText(this, "Wprowadź numer telefonu", Toast.LENGTH_SHORT).show()
+            // Usuwamy spacje i znaki białe z numeru
+            val rawNumber = etPhoneNumber.text.toString().trim().replace("\\s".toRegex(), "")
+            
+            if (rawNumber.isEmpty() || !rawNumber.startsWith("+")) {
+                Toast.makeText(this, "Wpisz numer w formacie +48...", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             
+            Log.d("PhoneAuth", "Rozpoczynanie weryfikacji dla: $rawNumber")
+
             val options = PhoneAuthOptions.newBuilder(auth)
-                .setPhoneNumber(phoneNumber)
+                .setPhoneNumber(rawNumber)
                 .setTimeout(60L, TimeUnit.SECONDS)
                 .setActivity(this)
                 .setCallbacks(callbacks)
@@ -62,9 +61,8 @@ class PhoneLoginActivity : AppCompatActivity() {
             PhoneAuthProvider.verifyPhoneNumber(options)
         }
 
-        // 2. Weryfikacja kodu z SMS
         btnVerifyCode.setOnClickListener {
-            val code = etSmsCode.text.toString()
+            val code = etSmsCode.text.toString().trim()
             if (code.isEmpty()) {
                 Toast.makeText(this, "Wprowadź kod SMS", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -86,11 +84,23 @@ class PhoneLoginActivity : AppCompatActivity() {
 
         override fun onCodeSent(id: String, token: PhoneAuthProvider.ForceResendingToken) {
             verificationId = id
-            Toast.makeText(this@PhoneLoginActivity, "Kod wysłany!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@PhoneLoginActivity, "Kod został wysłany!", Toast.LENGTH_SHORT).show()
         }
         
         override fun onVerificationFailed(e: FirebaseException) {
-            Toast.makeText(this@PhoneLoginActivity, "Błąd: ${e.message}", Toast.LENGTH_LONG).show()
+            Log.e("PhoneAuth", "Błąd Firebase: ${e.message}", e)
+            
+            when (e) {
+                is FirebaseAuthInvalidCredentialsException -> {
+                    Toast.makeText(this@PhoneLoginActivity, "Nieprawidłowy format numeru.", Toast.LENGTH_LONG).show()
+                }
+                is FirebaseTooManyRequestsException -> {
+                    Toast.makeText(this@PhoneLoginActivity, "Zbyt wiele prób. Spróbuj później.", Toast.LENGTH_LONG).show()
+                }
+                else -> {
+                    Toast.makeText(this@PhoneLoginActivity, "Błąd: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 
