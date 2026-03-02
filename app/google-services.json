@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "275147160054",
+    "project_id": "schoolspace-e2741",
+    "storage_bucket": "schoolspace-e2741.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:275147160054:android:9ef76a45c9b6dc06ebafd7",
+        "android_client_info": {
+          "package_name": "com.example.schoolspace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABcV69rNGYKtNh3DY9nL-TWN71t1JIRU0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
