@@ -28,15 +28,28 @@ class RegisterActivity : AppCompatActivity() {
         }
 
         register.setOnClickListener {
-            val emailText = email.text.toString()
-            val passwordText = password.text.toString()
+            val emailText = email.text.toString().trim()
+            val passwordText = password.text.toString().trim()
 
             if (emailText.isNotEmpty() && passwordText.isNotEmpty()) {
                 auth.createUserWithEmailAndPassword(emailText, passwordText)
                     .addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
-                            Toast.makeText(baseContext, "Rejestracja udana.", Toast.LENGTH_SHORT).show()
-                            finish()
+                            val user = auth.currentUser
+                            user?.sendEmailVerification()
+                                ?.addOnCompleteListener { verifyTask ->
+                                    if (verifyTask.isSuccessful) {
+                                        Toast.makeText(baseContext, 
+                                            "Rejestracja udana! Sprawdź e-mail w celu weryfikacji.", 
+                                            Toast.LENGTH_LONG).show()
+                                        auth.signOut()
+                                        finish()
+                                    } else {
+                                        Toast.makeText(baseContext, 
+                                            "Błąd wysyłania e-maila: ${verifyTask.exception?.message}", 
+                                            Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                         } else {
                             Toast.makeText(baseContext, "Błąd rejestracji: ${task.exception?.message}",
                                 Toast.LENGTH_SHORT).show()

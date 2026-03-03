@@ -12,7 +12,20 @@
           "package_name": "com.example.schoolspace"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "275147160054-fkhnvpktnn50a33fenpt4egajfvnmun3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.schoolspace",
+            "certificate_hash": "b7314302fd6f438cf87772da963518edccd600b7"
+          }
+        },
+        {
+          "client_id": "275147160054-ggt3i5a67eqlv7l37k3vmke8df7rbgd2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyABcV69rNGYKtNh3DY9nL-TWN71t1JIRU0"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "275147160054-ggt3i5a67eqlv7l37k3vmke8df7rbgd2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -42,7 +42,6 @@ class PhoneLoginActivity : AppCompatActivity() {
         txtBackToLogin.setOnClickListener { finish() }
 
         btnSendSms.setOnClickListener {
-            // Usuwamy spacje i znaki białe z numeru
             val rawNumber = etPhoneNumber.text.toString().trim().replace("\\s".toRegex(), "")
             
             if (rawNumber.isEmpty() || !rawNumber.startsWith("+")) {
@@ -79,23 +78,25 @@ class PhoneLoginActivity : AppCompatActivity() {
 
     private val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
         override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+            Log.d("PhoneAuth", "Weryfikacja zakończona automatycznie")
             signInWithPhoneAuthCredential(credential)
         }
 
         override fun onCodeSent(id: String, token: PhoneAuthProvider.ForceResendingToken) {
             verificationId = id
+            Log.d("PhoneAuth", "Kod SMS został wysłany: $id")
             Toast.makeText(this@PhoneLoginActivity, "Kod został wysłany!", Toast.LENGTH_SHORT).show()
         }
         
         override fun onVerificationFailed(e: FirebaseException) {
-            Log.e("PhoneAuth", "Błąd Firebase: ${e.message}", e)
+            Log.e("PhoneAuth", "Błąd weryfikacji: ${e.message}", e)
             
             when (e) {
                 is FirebaseAuthInvalidCredentialsException -> {
                     Toast.makeText(this@PhoneLoginActivity, "Nieprawidłowy format numeru.", Toast.LENGTH_LONG).show()
                 }
                 is FirebaseTooManyRequestsException -> {
-                    Toast.makeText(this@PhoneLoginActivity, "Zbyt wiele prób. Spróbuj później.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@PhoneLoginActivity, "Zbyt wiele prób. Firebase zablokował ten numer tymczasowo.", Toast.LENGTH_LONG).show()
                 }
                 else -> {
                     Toast.makeText(this@PhoneLoginActivity, "Błąd: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
@@ -106,9 +107,11 @@ class PhoneLoginActivity : AppCompatActivity() {
 
     private fun signInWithPhoneAuthCredential(credential: PhoneAuthCredential) {
         auth.signInWithCredential(credential).addOnSuccessListener {
+            Log.d("PhoneAuth", "Zalogowano pomyślnie")
             startActivity(Intent(this, MainActivity::class.java))
             finishAffinity()
         }.addOnFailureListener { e ->
+            Log.e("PhoneAuth", "Błąd logowania: ${e.message}")
             Toast.makeText(this, "Błąd logowania: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }

@@ -27,38 +27,44 @@ class LoginActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        // 🔹 Widoki
+        // Widoki
         val email = findViewById<TextInputEditText>(R.id.etEmail)
         val password = findViewById<TextInputEditText>(R.id.etPassword)
         val login = findViewById<Button>(R.id.btnLogin)
         val register = findViewById<TextView>(R.id.txtRegister)
         val googleBtn = findViewById<Button>(R.id.btnGoogleLogin)
-        val phoneBtn = findViewById<Button>(R.id.btnPhoneLogin)
 
-        // 🔹 Logowanie email + hasło
+        // Logowanie email + hasło
         login.setOnClickListener {
-            if (email.text.isNullOrEmpty() || password.text.isNullOrEmpty()) {
+            val emailText = email.text.toString().trim()
+            val passwordText = password.text.toString().trim()
+
+            if (emailText.isEmpty() || passwordText.isEmpty()) {
                 Toast.makeText(this, "Uzupełnij wszystkie pola", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            auth.signInWithEmailAndPassword(
-                email.text.toString(),
-                password.text.toString()
-            ).addOnSuccessListener {
-                Toast.makeText(this, "Zalogowano", Toast.LENGTH_SHORT).show()
-                goToMain()
-            }.addOnFailureListener {
-                Toast.makeText(this, "Złe dane logowania", Toast.LENGTH_LONG).show()
-            }
+            auth.signInWithEmailAndPassword(emailText, passwordText)
+                .addOnSuccessListener {
+                    val user = auth.currentUser
+                    if (user != null && user.isEmailVerified) {
+                        Toast.makeText(this, "Zalogowano", Toast.LENGTH_SHORT).show()
+                        goToMain()
+                    } else {
+                        Toast.makeText(this, "Potwierdź swój e-mail, aby się zalogować.", Toast.LENGTH_LONG).show()
+                        auth.signOut()
+                    }
+                }.addOnFailureListener {
+                    Toast.makeText(this, "Złe dane logowania lub brak konta", Toast.LENGTH_LONG).show()
+                }
         }
 
-        // 🔹 Przejście do rejestracji
+        // Przejście do rejestracji
         register.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
 
-        // 🔹 Konfiguracja Google Sign-In
+        // Konfiguracja Google Sign-In
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
@@ -66,19 +72,14 @@ class LoginActivity : AppCompatActivity() {
 
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
-        // 🔹 Klik Google
+        // Klik Google
         googleBtn.setOnClickListener {
             val signInIntent = googleSignInClient.signInIntent
             googleLauncher.launch(signInIntent)
         }
-
-        // 🔹 Klik Telefon
-        phoneBtn.setOnClickListener {
-            startActivity(Intent(this, PhoneLoginActivity::class.java))
-        }
     }
 
-    // 🔹 Obsługa wyniku Google
+    // Obsługa wyniku Google
     private val googleLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -92,7 +93,7 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-    // 🔹 Firebase Auth z Google
+    // Firebase Auth z Google
     private fun firebaseAuthWithGoogle(idToken: String) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
