@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="primary">#3275D6</color>
-    <color name="background">#F5F7FA</color>
-    <color name="text_primary">#1A1C1E</color>
+    <color name="primary">#6200EE</color>
+    <color name="secondary">#03DAC6</color>
+    <color name="background">#FFFAFAFA</color>
+    <color name="text_primary">#000000</color>
+    <color name="error">#B3261E</color>
     <color name="ic_launcher_background">#FFFFFF</color>
 </resources>

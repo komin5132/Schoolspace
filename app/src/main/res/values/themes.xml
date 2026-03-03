@@ -1,8 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.SchoolSpace" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
     <style name="Theme.SchoolSpace" parent="Theme.Material3.DayNight.NoActionBar">
@@ -10,5 +7,8 @@
         <item name="colorSecondary">@color/secondary</item>
         <item name="android:colorBackground">@color/background</item>
         <item name="android:textColor">@color/text_primary</item>
+        <item name="colorSurface">@color/background</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorError">@color/error</item>
     </style>
 </resources>
