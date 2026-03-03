@@ -26,10 +26,11 @@
             app:layout_constraintEnd_toEndOf="parent">
 
             <ImageView
-                android:layout_width="64dp"
+                android:layout_width="104dp"
                 android:layout_height="64dp"
                 android:src="@drawable/ic_schoolspace_logo"
-                tools:ignore="ContentDescription" />
+                tools:ignore="ContentDescription"
+                android:layout_marginStart="-24dp"/>
 
             <TextView
                 android:id="@+id/txtTitle"
@@ -39,7 +40,7 @@
                 android:textSize="36sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary"
-                android:layout_marginStart="-8dp" />
+                android:layout_marginStart="-16dp" />
         </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
