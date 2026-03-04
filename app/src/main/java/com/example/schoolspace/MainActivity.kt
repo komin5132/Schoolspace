@@ -11,6 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -25,6 +26,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Wymuszamy niebieski kolor paska systemowego
+        window.statusBarColor = ContextCompat.getColor(this, R.color.primary)
+        // Ikony na pasku mają być białe
+        @Suppress("DEPRECATION")
+        window.decorView.systemUiVisibility = 0 
+
         setContentView(R.layout.activity_main)
 
         auth = FirebaseAuth.getInstance()
@@ -143,11 +151,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         super.onViewCreated(view, savedInstanceState)
         val switchDark = view.findViewById<SwitchMaterial>(R.id.switchDarkMode)
 
-        // Sprawdzamy FAKTYCZNY stan motywu (systemowy lub wymuszony)
         val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         val isNightModeActive = currentNightMode == Configuration.UI_MODE_NIGHT_YES
         
-        // Ustawiamy switch bez wywoływania listenera
         switchDark?.setOnCheckedChangeListener(null)
         switchDark?.isChecked = isNightModeActive
 

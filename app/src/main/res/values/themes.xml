@@ -3,12 +3,17 @@
     </style>
 
     <style name="Theme.SchoolSpace" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Kolory podstawowe -->
         <item name="colorPrimary">@color/primary</item>
-        <item name="colorSecondary">@color/secondary</item>
         <item name="android:colorBackground">@color/background</item>
         <item name="android:textColor">@color/text_primary</item>
-        <item name="colorSurface">@color/background</item>
-        <item name="colorOnSurface">@color/text_primary</item>
-        <item name="colorError">@color/error</item>
+
+        <!-- Pasek systemowy (StatusBar) -->
+        <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+
+        <!-- Pasek nawigacji dolnej systemowej -->
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
     </style>
 </resources>
