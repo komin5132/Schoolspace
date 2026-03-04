@@ -48,7 +48,6 @@ class LoginActivity : AppCompatActivity() {
                 .addOnSuccessListener {
                     val user = auth.currentUser
                     if (user != null && user.isEmailVerified) {
-                        Toast.makeText(this, "Zalogowano", Toast.LENGTH_SHORT).show()
                         goToMain()
                     } else {
                         Toast.makeText(this, "Potwierdź swój e-mail, aby się zalogować.", Toast.LENGTH_LONG).show()

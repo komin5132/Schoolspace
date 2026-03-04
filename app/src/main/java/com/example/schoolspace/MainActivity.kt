@@ -1,6 +1,7 @@
 package com.example.schoolspace
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -142,11 +143,14 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         super.onViewCreated(view, savedInstanceState)
         val switchDark = view.findViewById<SwitchMaterial>(R.id.switchDarkMode)
 
-        // Odczytujemy AKTUALNY stan motywu, aby wiedzieć jak ustawić switch
-        val currentMode = AppCompatDelegate.getDefaultNightMode()
-        switchDark?.isChecked = currentMode == AppCompatDelegate.MODE_NIGHT_YES
+        // Sprawdzamy FAKTYCZNY stan motywu (systemowy lub wymuszony)
+        val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        val isNightModeActive = currentNightMode == Configuration.UI_MODE_NIGHT_YES
+        
+        // Ustawiamy switch bez wywoływania listenera
+        switchDark?.setOnCheckedChangeListener(null)
+        switchDark?.isChecked = isNightModeActive
 
-        // Ustawiamy listenera dopiero PO ustawieniu isChecked, żeby uniknąć pętli
         switchDark?.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
