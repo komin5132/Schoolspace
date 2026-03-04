@@ -13,10 +13,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      # Remove or do not set org.gradle.java.home in gradle.properties, or:
-      - name: Remove org.gradle.java.home from gradle.properties if present
-        run: sed -i '/org.gradle.java.home/d' gradle.properties
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle (Debug)
