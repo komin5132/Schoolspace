@@ -5,6 +5,7 @@
     <color name="background">#FFFAFAFA</color>
     <color name="text_primary">#000000</color>
     <color name="surface">#1B263B</color>
+    <color name="text_secondary">#AAB4C8</color>
     <color name="error">#B3261E</color>
     <color name="ic_launcher_background">#FFFFFF</color>
 </resources>
