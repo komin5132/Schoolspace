@@ -8,12 +8,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: set up JDK 21
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+          java-version: '17'
+
+      # Remove or do not set org.gradle.java.home in gradle.properties, or:
+      - name: Remove org.gradle.java.home from gradle.properties if present
+        run: sed -i '/org.gradle.java.home/d' gradle.properties
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle (Debug)
