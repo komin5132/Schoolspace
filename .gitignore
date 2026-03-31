@@ -1,3 +1,7 @@
+google-services.json
+**/google-services.json
+GoogleService-Info.plist
+**/GoogleService-Info.plist
 *.iml
 .gradle
 /local.properties
@@ -13,3 +17,21 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Klucze API i sekrety
+*.key
+.env
+secrets.*
+.env.local
+.env.*.local
+
+# Logi i cache
+*.log
+logs/
+tmp/
+cache/
+
+# IDE i edytory
+.vscode/
+.idea/
+*.swp
+*.swo
