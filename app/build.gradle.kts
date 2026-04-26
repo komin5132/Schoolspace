@@ -1,17 +1,17 @@
 plugins {
     id("com.android.application")
     id("com.google.gms.google-services")
-
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
     namespace = "com.example.schoolspace"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.schoolspace"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -47,6 +47,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore") // Dodano dla systemu ról
     implementation("com.google.android.gms:play-services-auth:21.5.0")
 
     // głowne założenia Androida

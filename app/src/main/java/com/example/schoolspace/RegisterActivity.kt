@@ -7,16 +7,19 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class RegisterActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
         auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
         val email = findViewById<TextInputEditText>(R.id.etEmail)
         val password = findViewById<TextInputEditText>(R.id.etPassword)
@@ -36,23 +39,33 @@ class RegisterActivity : AppCompatActivity() {
                     .addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
                             val user = auth.currentUser
-                            user?.sendEmailVerification()
-                                ?.addOnCompleteListener { verifyTask ->
-                                    if (verifyTask.isSuccessful) {
-                                        Toast.makeText(baseContext, 
-                                            "Rejestracja udana! Sprawdź e-mail w celu weryfikacji.", 
-                                            Toast.LENGTH_LONG).show()
-                                        auth.signOut()
-                                        finish()
-                                    } else {
-                                        Toast.makeText(baseContext, 
-                                            "Błąd wysyłania e-maila: ${verifyTask.exception?.message}", 
-                                            Toast.LENGTH_SHORT).show()
+                            val uid = user?.uid
+                            
+                            // Tworzymy dane użytkownika w Firestore
+                            val userMap = hashMapOf(
+                                "uid" to uid,
+                                "email" to emailText,
+                                "role" to "student", // Domyślna rola
+                                "class" to "Brak"    // Domyślna klasa
+                            )
+
+                            if (uid != null) {
+                                db.collection("users").document(uid).set(userMap)
+                                    .addOnSuccessListener {
+                                        user.sendEmailVerification()
+                                            ?.addOnCompleteListener { verifyTask ->
+                                                if (verifyTask.isSuccessful) {
+                                                    Toast.makeText(baseContext, 
+                                                        "Rejestracja udana! Sprawdź e-mail.", 
+                                                        Toast.LENGTH_LONG).show()
+                                                    auth.signOut()
+                                                    finish()
+                                                }
+                                            }
                                     }
-                                }
+                            }
                         } else {
-                            Toast.makeText(baseContext, "Błąd rejestracji: ${task.exception?.message}",
-                                Toast.LENGTH_SHORT).show()
+                            Toast.makeText(baseContext, "Błąd: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                         }
                     }
             } else {

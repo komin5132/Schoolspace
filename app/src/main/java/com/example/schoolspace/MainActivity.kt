@@ -17,45 +17,73 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
+    private var userRole: String = "student"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Wymuszamy niebieski kolor paska systemowego
         window.statusBarColor = ContextCompat.getColor(this, R.color.primary)
-        // Ikony na pasku mają być białe
         @Suppress("DEPRECATION")
         window.decorView.systemUiVisibility = 0 
 
         setContentView(R.layout.activity_main)
 
         auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
         val btnProfile = findViewById<ImageButton>(R.id.btnProfile)
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
-        if (savedInstanceState == null) {
-            loadFragment(DashboardFragment())
-        }
+        // Sprawdzamy rolę w Firestore
+        checkUserRole(bottomNav)
 
         btnProfile.setOnClickListener { showProfileDialog() }
 
         bottomNav.setOnItemSelectedListener { item ->
             val fragment = when (item.itemId) {
-                R.id.nav_dashboard -> DashboardFragment()
+                R.id.nav_dashboard, R.id.nav_teacher_dashboard -> DashboardFragment()
                 R.id.nav_schedule -> ScheduleFragment()
+                R.id.nav_teacher_classes -> TeacherClassesFragment()
                 R.id.nav_messages -> MessagesFragment()
                 R.id.nav_settings -> SettingsFragment()
                 else -> DashboardFragment()
             }
             loadFragment(fragment)
             true
+        }
+    }
+
+    private fun checkUserRole(bottomNav: BottomNavigationView) {
+        val uid = auth.currentUser?.uid
+        if (uid != null) {
+            db.collection("users").document(uid).get()
+                .addOnSuccessListener { document ->
+                    if (document != null && document.exists()) {
+                        userRole = document.getString("role") ?: "student"
+                        setupNavigation(bottomNav)
+                    }
+                }
+        }
+    }
+
+    private fun setupNavigation(bottomNav: BottomNavigationView) {
+        if (userRole == "teacher") {
+            bottomNav.menu.clear()
+            bottomNav.inflateMenu(R.menu.teacher_nav_menu)
+            loadFragment(DashboardFragment()) // Start dla nauczyciela
+        } else {
+            // Uczeń ma już domyślne menu z XML, ale dla pewności:
+            bottomNav.menu.clear()
+            bottomNav.inflateMenu(R.menu.bottom_nav_menu)
+            loadFragment(DashboardFragment())
         }
     }
 
@@ -70,10 +98,11 @@ class MainActivity : AppCompatActivity() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_profile, null)
         
         val txtEmail = dialogView.findViewById<TextView>(R.id.txtUserEmail)
+        val txtRole = dialogView.findViewById<TextView>(android.R.id.text1) // Placeholder dla roli
         val btnLogout = dialogView.findViewById<Button>(R.id.btnLogoutDialog)
-        val btnAddAccount = dialogView.findViewById<Button>(R.id.btnAddAccount)
 
         txtEmail.text = user?.email ?: "Użytkownik"
+        // txtRole.text = "Rola: ${userRole.uppercase()}"
 
         val dialog = MaterialAlertDialogBuilder(this)
             .setView(dialogView)
@@ -86,83 +115,13 @@ class MainActivity : AppCompatActivity() {
             finish()
         }
 
-        btnAddAccount.setOnClickListener {
-            Toast.makeText(this, "Dodawanie konta wkrótce", Toast.LENGTH_SHORT).show()
-            dialog.dismiss()
-        }
-
         dialog.show()
     }
 }
 
+// Fragmenty
 class DashboardFragment : Fragment(R.layout.fragment_dashboard)
-
-class ScheduleFragment : Fragment(R.layout.fragment_schedule) {
-    private var calendar = Calendar.getInstance()
-    private val dateFormat = SimpleDateFormat("EEEE, d MMMM", Locale("pl", "PL"))
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        
-        val txtDate = view.findViewById<TextView>(R.id.txtDate)
-        val btnPrev = view.findViewById<ImageButton>(R.id.btnPrevDay)
-        val btnNext = view.findViewById<ImageButton>(R.id.btnNextDay)
-        val btnRes = view.findViewById<View>(R.id.btnReservations)
-        val emptyText = view.findViewById<TextView>(R.id.txtEmptySchedule)
-        val listLessons = view.findViewById<View>(R.id.listLessons)
-
-        fun updateUI() {
-            txtDate.text = dateFormat.format(calendar.time).replaceFirstChar { it.uppercase() }
-            val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-            
-            if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
-                emptyText.text = "Wolne"
-                emptyText.visibility = View.VISIBLE
-                listLessons.visibility = View.GONE
-            } else {
-                emptyText.text = "Brak planu zajęć"
-                emptyText.visibility = View.VISIBLE
-                listLessons.visibility = View.GONE
-            }
-        }
-
-        btnPrev.setOnClickListener {
-            calendar.add(Calendar.DAY_OF_YEAR, -1)
-            updateUI()
-        }
-
-        btnNext.setOnClickListener {
-            calendar.add(Calendar.DAY_OF_YEAR, 1)
-            updateUI()
-        }
-
-        btnRes.setOnClickListener {
-            Toast.makeText(requireContext(), "Rezerwacja Klas - Wkrótce", Toast.LENGTH_SHORT).show()
-        }
-
-        updateUI()
-    }
-}
-
+class ScheduleFragment : Fragment(R.layout.fragment_schedule)
+class TeacherClassesFragment : Fragment(R.layout.fragment_dashboard) // Tymczasowy placeholder
 class MessagesFragment : Fragment(R.layout.fragment_messages)
-
-class SettingsFragment : Fragment(R.layout.fragment_settings) {
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        val switchDark = view.findViewById<SwitchMaterial>(R.id.switchDarkMode)
-
-        val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-        val isNightModeActive = currentNightMode == Configuration.UI_MODE_NIGHT_YES
-        
-        switchDark?.setOnCheckedChangeListener(null)
-        switchDark?.isChecked = isNightModeActive
-
-        switchDark?.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            }
-        }
-    }
-}
+class SettingsFragment : Fragment(R.layout.fragment_settings)
