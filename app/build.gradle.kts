@@ -1,17 +1,17 @@
 plugins {
     id("com.android.application")
     id("com.google.gms.google-services")
-    id("org.jetbrains.kotlin.android")
+
 }
 
 android {
     namespace = "com.example.schoolspace"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.schoolspace"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -31,6 +31,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     lint {
         disable.add("MissingDefaultResource")
     }
@@ -40,24 +41,26 @@ kotlin {
 }
 
 dependencies {
-    // Szyfrowanie Jetpack Security
+// Szyfrowanie Jetpack Security
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
-    // Zależności Firebase
+// Zależności Firebase
     implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-firestore") // Dodano dla systemu ról
     implementation("com.google.android.gms:play-services-auth:21.5.0")
 
-    // głowne założenia Androida
+// Zależności Firestore
+    implementation("com.google.firebase:firebase-firestore")
+
+// głowne założenia Androida
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    
-    // Testowanie
+
+// Testowanie
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
