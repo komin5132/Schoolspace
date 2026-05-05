@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true">
+        <layer-list>
+            <item>
+                <shape android:shape="oval">
+                    <solid android:color="#0062FF" />
+                    <size android:width="32dp" android:height="32dp" />
+                </shape>
+            </item>
+            <item android:drawable="@drawable/ic_moon"
+                android:gravity="center"
+                android:width="20dp"
+                android:height="20dp"
+                android:tint="#FFFFFF" />
+        </layer-list>
+    </item>
+    <item>
+        <layer-list>
+            <item>
+                <shape android:shape="oval">
+                    <solid android:color="#0062FF" />
+                    <size android:width="32dp" android:height="32dp" />
+                </shape>
+            </item>
+            <item android:drawable="@drawable/ic_sun"
+                android:gravity="center"
+                android:width="20dp"
+                android:height="20dp"
+                android:tint="#FFFFFF" />
+        </layer-list>
+    </item>
+</selector>

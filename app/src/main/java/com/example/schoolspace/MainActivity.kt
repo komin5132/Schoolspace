@@ -6,22 +6,46 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.RecyclerView
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.*
+
+// Modele danych
+data class Lesson(
+    val day: String = "",
+    val time: String = "",
+    val subject: String = "",
+    val room: String = "",
+    val teacher: String = ""
+)
+
+data class ScheduleChange(
+    val date: String = "",
+    val time: String = "",
+    val newSubject: String = "",
+    val isCancelled: Boolean = false
+)
+
+data class Grade(
+    val subject: String = "",
+    val value: String = "",
+    val description: String = "",
+    val date: com.google.firebase.Timestamp = com.google.firebase.Timestamp.now()
+)
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,6 +54,18 @@ class MainActivity : AppCompatActivity() {
     private var userRole: String = "unassigned"
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Zastosuj motyw przed super.onCreate
+        val themePrefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        // Domyślnie sprawdź czy system jest w trybie ciemnym jeśli nie ustawiono inaczej
+        val isDarkMode = themePrefs.getBoolean("dark_mode", 
+            (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        )
+        if (isDarkMode) {
+            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES)
+        } else {
+            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO)
+        }
+
         super.onCreate(savedInstanceState)
         
         window.statusBarColor = ContextCompat.getColor(this, R.color.primary)
@@ -44,23 +80,71 @@ class MainActivity : AppCompatActivity() {
         val btnProfile = findViewById<ImageButton>(R.id.btnProfile)
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
+        // Szybkie ładowanie roli z pamięci lokalnej, aby uniknąć białego ekranu
+        loadRoleFromCache(bottomNav)
         checkUserRole(bottomNav)
 
         btnProfile.setOnClickListener { showProfileDialog() }
 
         bottomNav.setOnItemSelectedListener { item ->
-            val fragment = when (item.itemId) {
-                R.id.nav_dashboard -> {
+            val nextFragment = when (item.itemId) {
+                R.id.nav_dashboard, R.id.nav_admin_dashboard, R.id.nav_teacher_dashboard -> {
                     if (userRole == "admin") AdminDashboardFragment() else DashboardFragment()
                 }
                 R.id.nav_schedule -> ScheduleFragment()
+                R.id.nav_manage_schedule -> ManageScheduleFragment()
+                R.id.nav_manage_users -> ManageUsersFragment()
+                R.id.nav_manage_grades -> ManageGradesFragment()
                 R.id.nav_teacher_classes -> TeacherClassesFragment()
                 R.id.nav_messages -> MessagesFragment()
                 R.id.nav_settings -> SettingsFragment()
                 else -> DashboardFragment()
             }
-            loadFragment(fragment, false)
+            loadFragment(nextFragment, false)
             true
+        }
+
+        // Przywróć ostatni fragment po zmianie motywu
+        if (savedInstanceState != null) {
+            val lastTag = savedInstanceState.getString("last_fragment_tag")
+            if (lastTag != null) {
+                // Synchronizacja BottomNav z przywróconym fragmentem
+                bottomNav.post {
+                    when (lastTag) {
+                        "AdminDashboardFragment", "DashboardFragment" -> bottomNav.selectedItemId = R.id.nav_dashboard
+                        "ScheduleFragment" -> bottomNav.selectedItemId = R.id.nav_schedule
+                        "ManageUsersFragment" -> bottomNav.selectedItemId = R.id.nav_manage_users
+                        "ManageScheduleFragment" -> bottomNav.selectedItemId = R.id.nav_manage_schedule
+                        "ManageGradesFragment" -> bottomNav.selectedItemId = R.id.nav_manage_grades
+                        "TeacherClassesFragment" -> bottomNav.selectedItemId = R.id.nav_teacher_classes
+                        "MessagesFragment" -> bottomNav.selectedItemId = R.id.nav_messages
+                        "SettingsFragment" -> bottomNav.selectedItemId = R.id.nav_settings
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        currentFragment?.let {
+            outState.putString("last_fragment_tag", it.javaClass.simpleName)
+        }
+    }
+
+    private fun loadRoleFromCache(bottomNav: BottomNavigationView) {
+        val currentEmail = auth.currentUser?.email ?: return
+        val prefs = getSharedPreferences("saved_accounts", Context.MODE_PRIVATE)
+        val accountsArray = JSONArray(prefs.getString("accounts_list", "[]"))
+        
+        for (i in 0 until accountsArray.length()) {
+            val obj = accountsArray.getJSONObject(i)
+            if (obj.getString("email") == currentEmail) {
+                userRole = obj.getString("role")
+                setupNavigation(bottomNav)
+                break
+            }
         }
     }
 
@@ -70,19 +154,25 @@ class MainActivity : AppCompatActivity() {
             db.collection("users").document(uid).get()
                 .addOnSuccessListener { document ->
                     if (document != null && document.exists()) {
-                        userRole = document.getString("role") ?: "unassigned"
+                        val newRole = document.getString("role") ?: "unassigned"
                         val email = auth.currentUser?.email ?: ""
-                        saveAccountLocally(email, userRole)
-                        setupNavigation(bottomNav)
+                        saveAccountLocally(email, newRole)
+                        
+                        // Aktualizuj nawigację tylko jeśli rola się zmieniła, 
+                        // aby uniknąć zbędnego przeładowania UI i lagów
+                        if (newRole != userRole) {
+                            userRole = newRole
+                            setupNavigation(bottomNav)
+                        }
                     } else {
-                        userRole = "unassigned"
-                        setupNavigation(bottomNav)
+                        if (userRole != "unassigned") {
+                            userRole = "unassigned"
+                            setupNavigation(bottomNav)
+                        }
                     }
                 }
                 .addOnFailureListener {
-                    Toast.makeText(this, "Błąd pobierania roli", Toast.LENGTH_SHORT).show()
-                    userRole = "unassigned"
-                    setupNavigation(bottomNav)
+                    // W razie błędu sieci, zostajemy przy roli z cache (jeśli istnieje)
                 }
         } else {
             startActivity(Intent(this, LoginActivity::class.java))
@@ -121,33 +211,72 @@ class MainActivity : AppCompatActivity() {
         when (userRole) {
             "admin" -> {
                 bottomNav.visibility = View.VISIBLE
-                bottomNav.inflateMenu(R.menu.bottom_nav_menu)
-                loadFragment(AdminDashboardFragment(), false)
+                bottomNav.inflateMenu(R.menu.admin_nav_menu)
+                loadInitialFragment(AdminDashboardFragment())
             }
             "teacher" -> {
                 bottomNav.visibility = View.VISIBLE
                 bottomNav.inflateMenu(R.menu.teacher_nav_menu)
-                loadFragment(DashboardFragment(), false)
+                loadInitialFragment(DashboardFragment())
             }
             "student" -> {
                 bottomNav.visibility = View.VISIBLE
                 bottomNav.inflateMenu(R.menu.bottom_nav_menu)
-                loadFragment(DashboardFragment(), false)
+                loadInitialFragment(DashboardFragment())
             }
             else -> {
                 bottomNav.visibility = View.GONE
-                loadFragment(UnassignedFragment(), false)
+                loadInitialFragment(UnassignedFragment())
             }
         }
     }
 
-    fun loadFragment(fragment: Fragment, addToBackStack: Boolean = true) {
-        val transaction = supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-        if (addToBackStack) {
-            transaction.addToBackStack(null)
+    private fun loadInitialFragment(fragment: Fragment) {
+        val current = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        if (current == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commitAllowingStateLoss()
         }
-        transaction.commit()
+    }
+
+    fun loadFragment(fragment: Fragment, addToBackStack: Boolean = true) {
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        
+        // Krytyczne zabezpieczenie przed zapętleniem
+        if (currentFragment != null && currentFragment::class == fragment::class) {
+            return 
+        }
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .apply { if (addToBackStack) addToBackStack(null) }
+            .commitAllowingStateLoss() // Bezpieczniejsze przy szybkich zmianach
+
+        // Sync BottomNav
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        val itemId = when (fragment) {
+            is AdminDashboardFragment, is DashboardFragment -> R.id.nav_dashboard
+            is ScheduleFragment -> if (userRole == "admin") R.id.nav_manage_schedule else R.id.nav_schedule
+            is ManageUsersFragment -> R.id.nav_manage_users
+            is ManageGradesFragment -> R.id.nav_manage_grades
+            is ManageScheduleFragment -> R.id.nav_manage_schedule
+            is TeacherClassesFragment -> R.id.nav_teacher_classes
+            is MessagesFragment -> R.id.nav_messages
+            is SettingsFragment -> R.id.nav_settings
+            else -> null
+        }
+        
+        itemId?.let { id ->
+            if (bottomNav.selectedItemId != id) {
+                // Używamy post, aby uniknąć konfliktów w trakcie cyklu życia fragmentu
+                bottomNav.post {
+                    if (bottomNav.selectedItemId != id) {
+                        bottomNav.selectedItemId = id
+                    }
+                }
+            }
+        }
     }
 
     private fun showProfileDialog() {
@@ -221,7 +350,7 @@ class MainActivity : AppCompatActivity() {
             val tvEmail = TextView(this)
             tvEmail.text = email
             tvEmail.textSize = 14f
-            tvEmail.setTextColor(ContextCompat.getColor(this, android.R.color.black))
+            tvEmail.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
 
             val tvRole = TextView(this)
             tvRole.text = translateRole(role)
@@ -284,39 +413,6 @@ class MainActivity : AppCompatActivity() {
             "teacher" -> "Nauczyciel"
             "admin" -> "Administrator"
             else -> "Brak przydziału"
-        }
-    }
-}
-
-// Fragmenty
-class DashboardFragment : Fragment(R.layout.fragment_dashboard)
-class ScheduleFragment : Fragment(R.layout.fragment_schedule)
-class TeacherClassesFragment : Fragment(R.layout.fragment_dashboard) 
-class MessagesFragment : Fragment(R.layout.fragment_messages)
-class SettingsFragment : Fragment(R.layout.fragment_settings)
-
-class UnassignedFragment : Fragment(R.layout.fragment_unassigned) {
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        view.findViewById<Button>(R.id.btnRefreshRole)?.setOnClickListener {
-            val intent = Intent(requireContext(), MainActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            startActivity(intent)
-        }
-    }
-}
-
-class AdminDashboardFragment : Fragment(R.layout.fragment_admin_dashboard) {
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        view.findViewById<View>(R.id.cardManageUsers).setOnClickListener {
-            (activity as? MainActivity)?.loadFragment(ManageUsersFragment(), true)
-        }
-        view.findViewById<View>(R.id.cardManageSchedule).setOnClickListener {
-            Toast.makeText(context, "Zarządzanie planem lekcji (Wkrótce)", Toast.LENGTH_SHORT).show()
-        }
-        view.findViewById<View>(R.id.cardManageGrades).setOnClickListener {
-            Toast.makeText(context, "Zarządzanie ocenami (Wkrótce)", Toast.LENGTH_SHORT).show()
         }
     }
 }

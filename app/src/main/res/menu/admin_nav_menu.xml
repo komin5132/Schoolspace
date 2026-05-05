@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_admin_dashboard"
+        android:icon="@android:drawable/ic_menu_today"
+        android:title="Start" />
+    <item
+        android:id="@+id/nav_manage_users"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="Użytkownicy" />
+    <item
+        android:id="@+id/nav_manage_schedule"
+        android:icon="@android:drawable/ic_menu_my_calendar"
+        android:title="Plan" />
+    <item
+        android:id="@+id/nav_manage_grades"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Oceny" />
+    <item
+        android:id="@+id/nav_settings"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="Ustawienia" />
+</menu>
