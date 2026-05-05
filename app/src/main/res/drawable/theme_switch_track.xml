@@ -1,55 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_checked="true">
-        <layer-list>
-            <item>
-                <shape android:shape="rectangle">
-                    <solid android:color="#1A1A1A" />
-                    <corners android:radius="24dp" />
-                    <size android:width="72dp" android:height="40dp" />
-                    <stroke android:width="1dp" android:color="#333333" />
-                </shape>
-            </item>
-            <!-- Ikona słońca po lewej -->
-            <item android:drawable="@drawable/ic_sun"
-                android:gravity="left|center_vertical"
-                android:left="10dp"
-                android:width="20dp"
-                android:height="20dp"
-                android:tint="#444444" />
-            <!-- Ikona księżyca po prawej -->
-            <item android:drawable="@drawable/ic_moon"
-                android:gravity="right|center_vertical"
-                android:right="10dp"
-                android:width="20dp"
-                android:height="20dp"
-                android:tint="#444444" />
-        </layer-list>
+    <item android:state_selected="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#1A1A1A" />
+            <corners android:radius="24dp" />
+            <size android:width="72dp" android:height="40dp" />
+            <stroke android:width="1dp" android:color="#333333" />
+        </shape>
     </item>
     <item>
-        <layer-list>
-            <item>
-                <shape android:shape="rectangle">
-                    <solid android:color="#FFFFFF" />
-                    <corners android:radius="24dp" />
-                    <size android:width="72dp" android:height="40dp" />
-                    <stroke android:width="1dp" android:color="#E0E0E0" />
-                </shape>
-            </item>
-            <!-- Ikona słońca po lewej -->
-            <item android:drawable="@drawable/ic_sun"
-                android:gravity="left|center_vertical"
-                android:left="10dp"
-                android:width="20dp"
-                android:height="20dp"
-                android:tint="#DDDDDD" />
-            <!-- Ikona księżyca po prawej -->
-            <item android:drawable="@drawable/ic_moon"
-                android:gravity="right|center_vertical"
-                android:right="10dp"
-                android:width="20dp"
-                android:height="20dp"
-                android:tint="#DDDDDD" />
-        </layer-list>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" />
+            <corners android:radius="24dp" />
+            <size android:width="72dp" android:height="40dp" />
+            <stroke android:width="1dp" android:color="#E0E0E0" />
+        </shape>
     </item>
 </selector>

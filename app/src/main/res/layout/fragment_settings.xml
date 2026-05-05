@@ -54,18 +54,56 @@
                     android:textSize="16sp"
                     android:textColor="@color/text_primary" />
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/switchDarkMode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <FrameLayout
+                    android:id="@+id/switchDarkModeContainer"
+                    android:layout_width="72dp"
+                    android:layout_height="40dp"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
                     android:layout_marginEnd="16dp"
-                    app:thumbTint="@null"
-                    app:trackTint="@null"
-                    android:thumb="@drawable/theme_switch_thumb"
-                    android:track="@drawable/theme_switch_track"
-                    app:switchMinWidth="54dp" />
+                    android:background="@drawable/theme_switch_track">
+
+                    <!-- Ikony w tle (szare) -->
+                    <ImageView
+                        android:id="@+id/bgSun"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="start|center_vertical"
+                        android:layout_marginStart="10dp"
+                        android:src="@drawable/ic_sun"
+                        android:contentDescription="Słońce tło" />
+
+                    <ImageView
+                        android:id="@+id/bgMoon"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginEnd="10dp"
+                        android:src="@drawable/ic_moon"
+                        android:contentDescription="Księżyc tło" />
+
+                    <View
+                        android:id="@+id/switchThumbBackground"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/theme_switch_thumb" />
+
+                    <ImageView
+                        android:id="@+id/switchDarkModeThumbIcon"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
+                        android:padding="6dp"
+                        android:src="@drawable/ic_sun"
+                        android:contentDescription="Ikona motywu" />
+
+                </FrameLayout>
+
             </RelativeLayout>
 
             <View
