@@ -45,8 +45,8 @@ class RegisterActivity : AppCompatActivity() {
                             val userMap = hashMapOf(
                                 "uid" to uid,
                                 "email" to emailText,
-                                "role" to "student", // Domyślna rola
-                                "class" to "Brak"    // Domyślna klasa
+                                "role" to "unassigned", // Domyślna rola: bez przydziału
+                                "createdAt" to com.google.firebase.Timestamp.now()
                             )
 
                             if (uid != null) {
@@ -56,12 +56,15 @@ class RegisterActivity : AppCompatActivity() {
                                             ?.addOnCompleteListener { verifyTask ->
                                                 if (verifyTask.isSuccessful) {
                                                     Toast.makeText(baseContext, 
-                                                        "Rejestracja udana! Sprawdź e-mail.", 
+                                                        "Rejestracja udana! Sprawdź e-mail, aby aktywować konto.", 
                                                         Toast.LENGTH_LONG).show()
                                                     auth.signOut()
                                                     finish()
                                                 }
                                             }
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(this, "Błąd zapisu danych: ${e.message}", Toast.LENGTH_SHORT).show()
                                     }
                             }
                         } else {

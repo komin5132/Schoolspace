@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="32dp">
+
+    <ImageView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:src="@android:drawable/ic_info"
+        android:contentDescription="Info"
+        app:tint="@color/primary" />
+
+    <TextView
+        android:id="@+id/txtStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Twoje konto oczekuje na weryfikację"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Administrator musi przydzielić Ci rolę (Uczeń/Nauczyciel), zanim uzyskasz dostęp do funkcji szkoły."
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:layout_marginTop="8dp"
+        android:alpha="0.7"/>
+
+    <Button
+        android:id="@+id/btnRefreshRole"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sprawdź ponownie"
+        android:layout_marginTop="24dp"
+        style="@style/Widget.Material3.Button.TonalButton"/>
+
+</LinearLayout>

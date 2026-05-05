@@ -23,25 +23,50 @@
         android:layout_marginTop="16dp" />
 
     <TextView
+        android:id="@+id/txtUserSubInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Klasa 3A | Uczeń"
+        android:text="Pobieranie informacji..."
         android:textColor="@android:color/darker_gray" />
-
-    <Button
-        android:id="@+id/btnAddAccount"
-        style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Dodaj konto" />
 
     <Button
         android:id="@+id/btnLogoutDialog"
         style="@style/Widget.Material3.Button.TonalButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
         android:text="Wyloguj się"
         android:textColor="@android:color/holo_red_dark" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Szybki wybór konta"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:alpha="0.6"
+        android:layout_marginBottom="8dp"/>
+
+    <LinearLayout
+        android:id="@+id/layoutSavedAccounts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+
+    <Button
+        android:id="@+id/btnAddAccount"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Dodaj inne konto"
+        app:icon="@android:drawable/ic_input_add" />
 
 </LinearLayout>
