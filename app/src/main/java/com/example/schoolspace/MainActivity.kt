@@ -40,13 +40,6 @@ data class ScheduleChange(
     val isCancelled: Boolean = false
 )
 
-data class Grade(
-    val subject: String = "",
-    val value: String = "",
-    val description: String = "",
-    val date: com.google.firebase.Timestamp = com.google.firebase.Timestamp.now()
-)
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
@@ -74,8 +67,12 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
+        NotificationHelper.createNotificationChannel(this)
+
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
+
+        setupBackgroundListeners()
 
         val btnProfile = findViewById<ImageButton>(R.id.btnProfile)
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
@@ -92,6 +89,7 @@ class MainActivity : AppCompatActivity() {
                     if (userRole == "admin") AdminDashboardFragment() else DashboardFragment()
                 }
                 R.id.nav_schedule -> ScheduleFragment()
+                R.id.nav_grades -> GradesFragment()
                 R.id.nav_manage_schedule -> ManageScheduleFragment()
                 R.id.nav_manage_users -> ManageUsersFragment()
                 R.id.nav_manage_grades -> ManageGradesFragment()
@@ -258,6 +256,7 @@ class MainActivity : AppCompatActivity() {
         val itemId = when (fragment) {
             is AdminDashboardFragment, is DashboardFragment -> R.id.nav_dashboard
             is ScheduleFragment -> if (userRole == "admin") R.id.nav_manage_schedule else R.id.nav_schedule
+            is GradesFragment -> R.id.nav_grades
             is ManageUsersFragment -> R.id.nav_manage_users
             is ManageGradesFragment -> R.id.nav_manage_grades
             is ManageScheduleFragment -> R.id.nav_manage_schedule
@@ -413,6 +412,74 @@ class MainActivity : AppCompatActivity() {
             "teacher" -> "Nauczyciel"
             "admin" -> "Administrator"
             else -> "Brak przydziału"
+        }
+    }
+
+    private var isFirstGradeSnapshot = true
+    private var isFirstMessageSnapshot = true
+    private var isFirstScheduleSnapshot = true
+
+    private fun setupBackgroundListeners() {
+        val uid = auth.currentUser?.uid ?: return
+        val userEmail = auth.currentUser?.email ?: return
+
+        // 1. Słuchacz Ocen
+        db.collection("users").document(uid).collection("grades")
+            .addSnapshotListener { snapshots, e ->
+                if (e != null || snapshots == null) return@addSnapshotListener
+                if (isFirstGradeSnapshot) {
+                    isFirstGradeSnapshot = false
+                    return@addSnapshotListener
+                }
+                
+                snapshots.documentChanges.forEach { dc ->
+                    if (dc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
+                        val g = dc.document.toObject(Grade::class.java)
+                        NotificationHelper.showNotification(this, "Nowa ocena!", "${g.subject}: ${g.value}", 101)
+                    }
+                }
+            }
+
+        // 2. Słuchacz Wiadomości
+        db.collection("messages")
+            .whereEqualTo("receiverEmail", userEmail)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null || snapshots == null) return@addSnapshotListener
+                if (isFirstMessageSnapshot) {
+                    isFirstMessageSnapshot = false
+                    return@addSnapshotListener
+                }
+
+                snapshots.documentChanges.forEach { dc ->
+                    if (dc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
+                        val sender = dc.document.getString("senderEmail") ?: "Ktoś"
+                        val subject = dc.document.getString("subject") ?: "Nowa wiadomość"
+                        NotificationHelper.showNotification(this, "Wiadomość od $sender", subject, 102)
+                    }
+                }
+            }
+
+        // 3. Słuchacz Zmian w Planie
+        db.collection("users").document(uid).get().addOnSuccessListener { userDoc ->
+            val userClass = userDoc.getString("class") ?: return@addOnSuccessListener
+            if (userClass == "Brak" || userClass.isEmpty()) return@addOnSuccessListener
+
+            db.collection("schedules").document(userClass).collection("changes")
+                .addSnapshotListener { snapshots, e ->
+                    if (e != null || snapshots == null) return@addSnapshotListener
+                    if (isFirstScheduleSnapshot) {
+                        isFirstScheduleSnapshot = false
+                        return@addSnapshotListener
+                    }
+
+                    snapshots.documentChanges.forEach { dc ->
+                        if (dc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
+                            val subj = dc.document.getString("newSubject") ?: "Zmiana"
+                            val date = dc.document.getString("date") ?: ""
+                            NotificationHelper.showNotification(this, "Zmiana w planie ($date)", "Nowy przedmiot: $subj", 103)
+                        }
+                    }
+                }
         }
     }
 }

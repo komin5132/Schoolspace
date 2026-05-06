@@ -9,6 +9,10 @@
         android:icon="@android:drawable/ic_menu_my_calendar"
         android:title="Plan" />
     <item
+        android:id="@+id/nav_grades"
+        android:icon="@android:drawable/btn_star"
+        android:title="Oceny" />
+    <item
         android:id="@+id/nav_messages"
         android:icon="@android:drawable/ic_menu_send"
         android:title="Wiadomości" />

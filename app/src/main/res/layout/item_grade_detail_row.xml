@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="8dp"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/txtDetValue"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/shape_dot_unread"
+        android:gravity="center"
+        android:text="5"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:textSize="18sp"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="16dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/txtDetDesc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sprawdzian"
+            android:textStyle="bold"
+            android:textSize="14sp"/>
+
+        <TextView
+            android:id="@+id/txtDetDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12.10.2023"
+            android:textSize="12sp"
+            android:alpha="0.6"/>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/txtDetWeight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="waga: 2"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        android:alpha="0.7"/>
+
+</LinearLayout>
