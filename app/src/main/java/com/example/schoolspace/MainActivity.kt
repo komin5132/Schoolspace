@@ -3,6 +3,7 @@ package com.example.schoolspace
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -149,29 +150,28 @@ class MainActivity : AppCompatActivity() {
     private fun checkUserRole(bottomNav: BottomNavigationView) {
         val uid = auth.currentUser?.uid
         if (uid != null) {
-            db.collection("users").document(uid).get()
-                .addOnSuccessListener { document ->
-                    if (document != null && document.exists()) {
-                        val newRole = document.getString("role") ?: "unassigned"
-                        val email = auth.currentUser?.email ?: ""
-                        saveAccountLocally(email, newRole)
-                        
-                        // Aktualizuj nawigację tylko jeśli rola się zmieniła, 
-                        // aby uniknąć zbędnego przeładowania UI i lagów
-                        if (newRole != userRole) {
-                            userRole = newRole
-                            setupNavigation(bottomNav)
-                        }
-                    } else {
-                        if (userRole != "unassigned") {
-                            userRole = "unassigned"
-                            setupNavigation(bottomNav)
-                        }
+            db.collection("users").document(uid).addSnapshotListener { document, error ->
+                if (error != null) {
+                    Log.e("MainActivity", "Listen failed.", error)
+                    return@addSnapshotListener
+                }
+
+                if (document != null && document.exists()) {
+                    val newRole = document.getString("role") ?: "unassigned"
+                    val email = auth.currentUser?.email ?: ""
+                    saveAccountLocally(email, newRole)
+                    
+                    if (newRole != userRole) {
+                        userRole = newRole
+                        setupNavigation(bottomNav)
                     }
+                } else {
+                    Log.e("MainActivity", "User document does not exist for UID: $uid. Signing out.")
+                    auth.signOut()
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
                 }
-                .addOnFailureListener {
-                    // W razie błędu sieci, zostajemy przy roli z cache (jeśli istnieje)
-                }
+            }
         } else {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
@@ -206,27 +206,34 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupNavigation(bottomNav: BottomNavigationView) {
         bottomNav.menu.clear()
-        when (userRole) {
+        Log.d("MainActivity", "Navigating for role: $userRole")
+        
+        val targetFragment: Fragment = when (userRole) {
             "admin" -> {
                 bottomNav.visibility = View.VISIBLE
                 bottomNav.inflateMenu(R.menu.admin_nav_menu)
-                loadInitialFragment(AdminDashboardFragment())
+                AdminDashboardFragment()
             }
             "teacher" -> {
                 bottomNav.visibility = View.VISIBLE
                 bottomNav.inflateMenu(R.menu.teacher_nav_menu)
-                loadInitialFragment(DashboardFragment())
+                DashboardFragment()
             }
             "student" -> {
                 bottomNav.visibility = View.VISIBLE
                 bottomNav.inflateMenu(R.menu.bottom_nav_menu)
-                loadInitialFragment(DashboardFragment())
+                DashboardFragment()
             }
             else -> {
+                Log.d("MainActivity", "Showing UnassignedFragment")
                 bottomNav.visibility = View.GONE
-                loadInitialFragment(UnassignedFragment())
+                UnassignedFragment()
             }
         }
+        
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, targetFragment)
+            .commitAllowingStateLoss()
     }
 
     private fun loadInitialFragment(fragment: Fragment) {
@@ -267,13 +274,38 @@ class MainActivity : AppCompatActivity() {
         }
         
         itemId?.let { id ->
-            if (bottomNav.selectedItemId != id) {
-                // Używamy post, aby uniknąć konfliktów w trakcie cyklu życia fragmentu
-                bottomNav.post {
-                    if (bottomNav.selectedItemId != id) {
-                        bottomNav.selectedItemId = id
+            try {
+                if (bottomNav.selectedItemId != id && bottomNav.menu.findItem(id) != null) {
+                    bottomNav.post {
+                        // Sprawdzamy ponownie wewnątrz posta, czy nadal potrzebna zmiana
+                        if (bottomNav.selectedItemId != id) {
+                            // Usuwamy na chwilę listener, aby uniknąć pętli
+                            bottomNav.setOnItemSelectedListener(null)
+                            bottomNav.selectedItemId = id
+                            // Przywracamy listener po zmianie
+                            bottomNav.setOnItemSelectedListener { item ->
+                                val nextFragment = when (item.itemId) {
+                                    R.id.nav_dashboard, R.id.nav_admin_dashboard, R.id.nav_teacher_dashboard -> {
+                                        if (userRole == "admin") AdminDashboardFragment() else DashboardFragment()
+                                    }
+                                    R.id.nav_schedule -> ScheduleFragment()
+                                    R.id.nav_grades -> GradesFragment()
+                                    R.id.nav_manage_schedule -> ManageScheduleFragment()
+                                    R.id.nav_manage_users -> ManageUsersFragment()
+                                    R.id.nav_manage_grades -> ManageGradesFragment()
+                                    R.id.nav_teacher_classes -> TeacherClassesFragment()
+                                    R.id.nav_messages -> MessagesFragment()
+                                    R.id.nav_settings -> SettingsFragment()
+                                    else -> DashboardFragment()
+                                }
+                                loadFragment(nextFragment, false)
+                                true
+                            }
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                // Elementu nie ma w menu - ignorujemy błąd synchronizacji
             }
         }
     }
@@ -307,6 +339,9 @@ class MainActivity : AppCompatActivity() {
         val dialog = MaterialAlertDialogBuilder(this).setView(dialogView).create()
 
         btnLogout.setOnClickListener {
+            // Wyczyść cache roli przed wylogowaniem
+            getSharedPreferences("saved_accounts", Context.MODE_PRIVATE).edit().clear().apply()
+
             auth.signOut()
             dialog.dismiss()
             startActivity(Intent(this, LoginActivity::class.java))

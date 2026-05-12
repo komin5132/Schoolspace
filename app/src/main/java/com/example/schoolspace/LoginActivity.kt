@@ -89,14 +89,28 @@ class LoginActivity : AppCompatActivity() {
 
     private fun performLogin(emailText: String, passwordText: String) {
         auth.signInWithEmailAndPassword(emailText, passwordText)
-            .addOnSuccessListener {
+            .addOnSuccessListener { authResult ->
                 savePassword(emailText, passwordText)
-                val user = auth.currentUser
-                if (user != null && user.isEmailVerified) {
-                    goToMain()
-                } else {
-                    Toast.makeText(this, "Potwierdź swój e-mail, aby się zalogować.", Toast.LENGTH_LONG).show()
-                    auth.signOut()
+                val user = authResult.user
+                if (user != null) {
+                    // Krytyczna poprawka: upewnij się, że dokument użytkownika istnieje
+                    val userRef = db.collection("users").document(user.uid)
+                    userRef.get().addOnSuccessListener { document ->
+                        if (!document.exists()) {
+                            val userMap = hashMapOf(
+                                "uid" to user.uid,
+                                "email" to user.email,
+                                "role" to "unassigned",
+                                "class" to "Brak",
+                                "createdAt" to com.google.firebase.Timestamp.now()
+                            )
+                            userRef.set(userMap).addOnSuccessListener {
+                                goToMain()
+                            }
+                        } else {
+                            goToMain()
+                        }
+                    }
                 }
             }.addOnFailureListener {
                 Toast.makeText(this, "Złe dane logowania lub błąd autoryzacji", Toast.LENGTH_LONG).show()

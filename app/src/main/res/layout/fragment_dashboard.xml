@@ -73,8 +73,9 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Sekcja Obecność (Z ramką) -->
+        <!-- Sekcja Następna Lekcja -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardNextLesson"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -89,38 +90,74 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp"
                 android:orientation="vertical">
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Obecność"
+                    android:text="Następna lekcja"
                     android:textStyle="bold"
                     android:textSize="18sp"
                     android:textColor="@color/primary" />
+
+                <LinearLayout
+                    android:id="@+id/layoutNextLessonInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/txtNextLessonTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="08:00"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="@color/primary" />
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="24dp"
+                        android:background="#DDDDDD"
+                        android:layout_marginHorizontal="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/txtNextLessonSubject"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Matematyka"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_primary" />
+
+                        <TextView
+                            android:id="@+id/txtNextLessonRoom"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Sala 204"
+                            android:textSize="12sp"
+                            android:alpha="0.7"
+                            android:textColor="@color/text_primary" />
+                    </LinearLayout>
+                </LinearLayout>
+
                 <TextView
+                    android:id="@+id/txtNoNextLesson"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Twoja frekwencja: 98%"
+                    android:text="Brak kolejnych lekcji dzisiaj"
                     android:layout_marginTop="4dp"
-                    android:textColor="@color/text_primary" />
+                    android:textColor="@color/text_primary"
+                    android:alpha="0.7" />
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Ogłoszenia -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/primary"
-            app:cardBackgroundColor="@android:color/transparent">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:text="Ogłoszenie: Brak lekcji WF w środę."
-                android:textColor="@color/text_primary" />
         </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>

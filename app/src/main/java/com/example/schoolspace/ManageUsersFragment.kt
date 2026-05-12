@@ -8,6 +8,9 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class ManageUsersFragment : Fragment(R.layout.fragment_manage_users) {
@@ -35,7 +38,67 @@ class ManageUsersFragment : Fragment(R.layout.fragment_manage_users) {
             override fun afterTextChanged(s: android.text.Editable?) {}
         })
 
+        view.findViewById<FloatingActionButton>(R.id.fabAddUser).setOnClickListener {
+            showAddUserDialog()
+        }
+
         loadUsers()
+    }
+
+    private fun showAddUserDialog() {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_user, null)
+        val etEmail = dialogView.findViewById<EditText>(R.id.etNewUserEmail)
+        val etPassword = dialogView.findViewById<EditText>(R.id.etNewUserPassword)
+        val spinnerRole = dialogView.findViewById<Spinner>(R.id.spinnerNewUserRole)
+        val tilClass = dialogView.findViewById<View>(R.id.tilNewUserClass)
+        val etClass = dialogView.findViewById<EditText>(R.id.etNewUserClass)
+
+        val roles = arrayOf("student", "teacher", "admin", "unassigned")
+        val adapterRole = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, roles)
+        adapterRole.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerRole.adapter = adapterRole
+
+        spinnerRole.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                val role = roles[pos]
+                tilClass.visibility = if (role == "student" || role == "teacher") View.VISIBLE else View.GONE
+            }
+            override fun onNothingSelected(p: AdapterView<*>?) {}
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Dodaj nowego użytkownika")
+            .setView(dialogView)
+            .setPositiveButton("Dodaj") { _, _ ->
+                val email = etEmail.text.toString().trim()
+                val password = etPassword.text.toString().trim()
+                val role = spinnerRole.selectedItem.toString()
+                val className = etClass.text.toString().trim()
+
+                if (email.isEmpty() || password.length < 6) {
+                    Toast.makeText(context, "Email i hasło (min. 6 znaków) są wymagane", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                // Uwaga: W Firebase Auth admin nie może bezpośrednio stworzyć innego konta 
+                // bez wylogowania siebie, CHYBA ŻE używamy Firebase Admin SDK (serwerowe) 
+                // lub specjalnej instancji tymczasowej.
+                // Tutaj robimy obejście: tworzymy profil w Firestore. Użytkownik i tak 
+                // będzie musiał się zarejestrować tym mailem, ale rola już na niego będzie czekać.
+                
+                val userMap = hashMapOf(
+                    "email" to email,
+                    "role" to role,
+                    "class" to if (role == "student" || role == "teacher") className else "Brak",
+                    "createdAt" to com.google.firebase.Timestamp.now()
+                )
+
+                db.collection("users").add(userMap).addOnSuccessListener {
+                    Toast.makeText(context, "Przygotowano profil dla $email. Użytkownik musi się teraz zarejestrować tym e-mailem.", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("Anuluj", null)
+            .show()
     }
 
     private fun filterUsers(query: String) {
