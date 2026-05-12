@@ -3,9 +3,7 @@ package com.example.schoolspace
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,6 +15,7 @@ import java.util.*
 
 class ScheduleFragment : Fragment(R.layout.fragment_schedule) {
     private var selectedDate = Date()
+    private var targetClass: String = ""
     private lateinit var db: FirebaseFirestore
     private lateinit var auth: FirebaseAuth
 
@@ -25,9 +24,57 @@ class ScheduleFragment : Fragment(R.layout.fragment_schedule) {
         db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
 
+        setupClassSelector(view)
         setupDatePicker(view)
-        loadDailySchedule(view)
         setupFab(view)
+    }
+
+    private fun setupClassSelector(view: View) {
+        val tilSelector = view.findViewById<View>(R.id.tilClassSelector)
+        val etSelector = view.findViewById<AutoCompleteTextView>(R.id.etClassSelector)
+        val uid = auth.currentUser?.uid ?: return
+
+        db.collection("users").document(uid).get().addOnSuccessListener { doc ->
+            val role = doc.getString("role") ?: "student"
+            val myClass = doc.getString("class") ?: ""
+            targetClass = myClass
+
+            if (role == "teacher" || role == "admin") {
+                tilSelector.visibility = View.VISIBLE
+                etSelector.setText(targetClass)
+                
+                etSelector.setOnItemClickListener { _, _, _, _ ->
+                    targetClass = etSelector.text.toString().trim()
+                    loadDailySchedule(view) // Zmiana z requireView() na view
+                }
+
+                // Dodaj TextWatcher, aby reagować na zmiany tekstu (jeśli użytkownik wpisze ręcznie)
+                etSelector.addTextChangedListener(object : android.text.TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                    override fun afterTextChanged(s: android.text.Editable?) {
+                        val newClass = s.toString().trim()
+                        if (newClass != targetClass) {
+                            targetClass = newClass
+                            loadDailySchedule(view)
+                        }
+                    }
+                })
+
+                // Opcjonalnie: automatyczne rozwijanie przy kliknięciu dla lepszego UX
+                etSelector.setOnClickListener {
+                    (it as? AutoCompleteTextView)?.showDropDown()
+                }
+                
+                db.collection("schedules").get().addOnSuccessListener { snapshots ->
+                    val classes = snapshots.documents.map { it.id }
+                    val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, classes)
+                    etSelector.setAdapter(adapter)
+                }
+            }
+            
+            loadDailySchedule(view)
+        }
     }
 
     private fun setupFab(view: View) {
@@ -60,7 +107,6 @@ class ScheduleFragment : Fragment(R.layout.fragment_schedule) {
         val dates = mutableListOf<Date>()
         val cal = Calendar.getInstance()
         
-        // Zacznij od poniedziałku zeszłego tygodnia
         cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
         cal.add(Calendar.DAY_OF_YEAR, -14)
         
@@ -70,7 +116,6 @@ class ScheduleFragment : Fragment(R.layout.fragment_schedule) {
         }
 
         rvDatePicker.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-        // SnapHelper sprawia, że dni "zatrzaskują się" przy przesuwaniu
         val snapHelper = androidx.recyclerview.widget.LinearSnapHelper()
         snapHelper.attachToRecyclerView(rvDatePicker)
 
@@ -81,7 +126,6 @@ class ScheduleFragment : Fragment(R.layout.fragment_schedule) {
         }
         rvDatePicker.adapter = adapter
         
-        // Przewiń do dzisiaj
         val today = Calendar.getInstance()
         val startIndex = dates.indexOfFirst { 
             val c = Calendar.getInstance().apply { time = it }
@@ -105,100 +149,97 @@ class ScheduleFragment : Fragment(R.layout.fragment_schedule) {
         container.removeAllViews()
         val emptyText = view.findViewById<TextView>(R.id.txtEmptySchedule)
 
+        if (targetClass.isEmpty() || targetClass == "Brak") {
+            emptyText.text = "Nie wybrano klasy lub brak przydziału"
+            emptyText.visibility = View.VISIBLE
+            return
+        }
+
         val uid = auth.currentUser?.uid ?: return
+        val userClass = targetClass
 
-        db.collection("users").document(uid).get().addOnSuccessListener { userDoc ->
-            val userClass = userDoc.getString("class") ?: ""
-            if (userClass.isEmpty() || userClass == "Brak") {
-                emptyText.text = "Nie jesteś przypisany do żadnej klasy"
-                emptyText.visibility = View.VISIBLE
-                return@addOnSuccessListener
-            }
+        val cal = Calendar.getInstance().apply { time = selectedDate }
+        val dayOfWeek = when(cal.get(Calendar.DAY_OF_WEEK)) {
+            Calendar.MONDAY -> "poniedziałek"
+            Calendar.TUESDAY -> "wtorek"
+            Calendar.WEDNESDAY -> "środa"
+            Calendar.THURSDAY -> "czwartek"
+            Calendar.FRIDAY -> "piątek"
+            else -> "weekend"
+        }
 
-            val cal = Calendar.getInstance().apply { time = selectedDate }
-            val dayOfWeek = when(cal.get(Calendar.DAY_OF_WEEK)) {
-                Calendar.MONDAY -> "poniedziałek"
-                Calendar.TUESDAY -> "wtorek"
-                Calendar.WEDNESDAY -> "środa"
-                Calendar.THURSDAY -> "czwartek"
-                Calendar.FRIDAY -> "piątek"
-                else -> "weekend"
-            }
+        if (dayOfWeek == "weekend") {
+            emptyText.text = "Weekend - brak zajęć"
+            emptyText.visibility = View.VISIBLE
+            return
+        }
 
-            if (dayOfWeek == "weekend") {
-                emptyText.text = "Weekend - brak zajęć"
-                emptyText.visibility = View.VISIBLE
-                return@addOnSuccessListener
-            }
+        db.collection("schedules").document(userClass).collection("weekly")
+            .whereEqualTo("day", dayOfWeek)
+            .get().addOnSuccessListener { weeklyDocs ->
+                val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(selectedDate)
 
-            db.collection("schedules").document(userClass).collection("weekly")
-                .whereEqualTo("day", dayOfWeek)
-                .get().addOnSuccessListener { weeklyDocs ->
-                    val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(selectedDate)
+                db.collection("schedules").document(userClass).collection("changes")
+                    .whereEqualTo("date", dateStr)
+                    .get().addOnSuccessListener { changeDocs ->
 
-                    db.collection("schedules").document(userClass).collection("changes")
-                        .whereEqualTo("date", dateStr)
-                        .get().addOnSuccessListener { changeDocs ->
+                        val changes = changeDocs.documents.map { it.data }
+                        val sortedDocs = weeklyDocs.documents.sortedBy { it.getString("time") }
 
-                            val changes = changeDocs.documents.map { it.data }
-                            val sortedDocs = weeklyDocs.documents.sortedBy { it.getString("time") }
+                        for (doc in sortedDocs) {
+                            val lessonTime = doc.getString("time") ?: ""
+                            val lessonSubj = doc.getString("subject") ?: ""
+                            val room = doc.getString("room") ?: ""
 
-                            for (doc in sortedDocs) {
-                                val lessonTime = doc.getString("time") ?: ""
-                                val lessonSubj = doc.getString("subject") ?: ""
-                                val room = doc.getString("room") ?: ""
+                            val change = changes.find { it?.get("time") == lessonTime }
 
-                                val change = changes.find { it?.get("time") == lessonTime }
+                            val itemView = layoutInflater.inflate(R.layout.item_lesson, container, false)
+                            itemView.findViewById<TextView>(R.id.txtLessonTime).text = lessonTime
+                            itemView.findViewById<TextView>(R.id.txtLessonRoom).text = "Sala $room"
 
-                                val itemView = layoutInflater.inflate(R.layout.item_lesson, container, false)
-                                itemView.findViewById<TextView>(R.id.txtLessonTime).text = lessonTime
-                                itemView.findViewById<TextView>(R.id.txtLessonRoom).text = "Sala $room"
+                            val txtSubj = itemView.findViewById<TextView>(R.id.txtLessonSubject)
+                            val txtChange = itemView.findViewById<TextView>(R.id.txtLessonChange)
 
-                                val txtSubj = itemView.findViewById<TextView>(R.id.txtLessonSubject)
-                                val txtChange = itemView.findViewById<TextView>(R.id.txtLessonChange)
-
-                                txtSubj.text = lessonSubj
-                                if (change != null) {
-                                    txtSubj.paintFlags = txtSubj.paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
-                                    txtSubj.alpha = 0.5f
-                                    txtChange.visibility = View.VISIBLE
-                                    val newSubj = change["newSubject"] as? String
-                                    val isCancelled = change["isCancelled"] as? Boolean ?: false
-                                    txtChange.text = if (isCancelled) "ODWOŁANA" else "ZMIANA: $newSubj"
-                                }
-
-                                container.addView(itemView)
+                            txtSubj.text = lessonSubj
+                            if (change != null) {
+                                txtSubj.paintFlags = txtSubj.paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+                                txtSubj.alpha = 0.5f
+                                txtChange.visibility = View.VISIBLE
+                                val newSubj = change["newSubject"] as? String
+                                val isCancelled = change["isCancelled"] as? Boolean ?: false
+                                txtChange.text = if (isCancelled) "ODWOŁANA" else "ZMIANA: $newSubj"
                             }
 
-                            // Dodać rezerwacje sal do planu dnia
-                            db.collection("room_reservations")
-                                .whereEqualTo("uid", uid)
-                                .whereEqualTo("date", dateStr)
-                                .get().addOnSuccessListener { resDocs ->
-                                    if (!resDocs.isEmpty) {
-                                        val header = TextView(context).apply {
-                                            text = "MOJE REZERWACJE"
-                                            setPadding(0, 32, 0, 8)
-                                            setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.primary))
-                                            setTypeface(null, android.graphics.Typeface.BOLD)
-                                            textSize = 14f
-                                        }
-                                        container.addView(header)
-
-                                        for (res in resDocs) {
-                                            val resView = layoutInflater.inflate(R.layout.item_lesson, container, false)
-                                            resView.findViewById<TextView>(R.id.txtLessonTime).text = res.getString("time")
-                                            resView.findViewById<TextView>(R.id.txtLessonSubject).text = res.getString("topic") ?: "Rezerwacja Sali"
-                                            resView.findViewById<TextView>(R.id.txtLessonRoom).text = "Sala ${res.getString("room")}"
-                                            resView.alpha = 0.9f
-                                            container.addView(resView)
-                                        }
-                                    }
-                                    emptyText.visibility = if (container.childCount == 0) View.VISIBLE else View.GONE
-                                    if (container.childCount == 0) emptyText.text = "Brak planu na ten dzień"
-                                }
+                            container.addView(itemView)
                         }
-                }
-        }
+
+                        db.collection("room_reservations")
+                            .whereEqualTo("uid", uid)
+                            .whereEqualTo("date", dateStr)
+                            .get().addOnSuccessListener { resDocs ->
+                                if (!resDocs.isEmpty) {
+                                    val header = TextView(context).apply {
+                                        text = "MOJE REZERWACJE"
+                                        setPadding(0, 32, 0, 8)
+                                        setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.primary))
+                                        setTypeface(null, android.graphics.Typeface.BOLD)
+                                        textSize = 14f
+                                    }
+                                    container.addView(header)
+
+                                    for (res in resDocs) {
+                                        val resView = layoutInflater.inflate(R.layout.item_lesson, container, false)
+                                        resView.findViewById<TextView>(R.id.txtLessonTime).text = res.getString("time")
+                                        resView.findViewById<TextView>(R.id.txtLessonSubject).text = res.getString("topic") ?: "Rezerwacja Sali"
+                                        resView.findViewById<TextView>(R.id.txtLessonRoom).text = "Sala ${res.getString("room")}"
+                                        resView.alpha = 0.9f
+                                        container.addView(resView)
+                                    }
+                                }
+                                emptyText.visibility = if (container.childCount == 0) View.VISIBLE else View.GONE
+                                if (container.childCount == 0) emptyText.text = "Brak planu na ten dzień"
+                            }
+                    }
+            }
     }
 }

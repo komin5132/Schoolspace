@@ -44,6 +44,20 @@ class RoomReservationFragment : Fragment(R.layout.fragment_room_reservation) {
         val roomAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, roomsList)
         etRoom.setAdapter(roomAdapter)
 
+        // Walidacja przy każdej zmianie tekstu
+        etRoom.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val input = s.toString().trim()
+                if (input.isNotEmpty() && !roomsList.contains(input)) {
+                    tilRoom.error = "Nieprawidłowa sala"
+                } else {
+                    tilRoom.error = null
+                }
+            }
+        })
+
         val cal = Calendar.getInstance()
 
         etDate.setOnClickListener {

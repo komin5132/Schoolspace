@@ -5,13 +5,13 @@
         android:icon="@android:drawable/ic_menu_today"
         android:title="Start" />
     <item
+        android:id="@+id/nav_schedule"
+        android:icon="@android:drawable/ic_menu_month"
+        android:title="Plan Lekcji" />
+    <item
         android:id="@+id/nav_manage_grades"
         android:icon="@android:drawable/ic_menu_edit"
         android:title="Dodaj Oceny" />
-    <item
-        android:id="@+id/nav_teacher_classes"
-        android:icon="@android:drawable/ic_menu_myplaces"
-        android:title="Moje Klasy" />
     <item
         android:id="@+id/nav_messages"
         android:icon="@android:drawable/ic_menu_send"

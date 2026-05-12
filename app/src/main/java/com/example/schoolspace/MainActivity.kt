@@ -87,14 +87,17 @@ class MainActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             val nextFragment = when (item.itemId) {
                 R.id.nav_dashboard, R.id.nav_admin_dashboard, R.id.nav_teacher_dashboard -> {
-                    if (userRole == "admin") AdminDashboardFragment() else DashboardFragment()
+                    when (userRole) {
+                        "admin" -> AdminDashboardFragment()
+                        "teacher" -> TeacherDashboardFragment()
+                        else -> DashboardFragment()
+                    }
                 }
                 R.id.nav_schedule -> ScheduleFragment()
                 R.id.nav_grades -> GradesFragment()
                 R.id.nav_manage_schedule -> ManageScheduleFragment()
                 R.id.nav_manage_users -> ManageUsersFragment()
                 R.id.nav_manage_grades -> ManageGradesFragment()
-                R.id.nav_teacher_classes -> TeacherClassesFragment()
                 R.id.nav_messages -> MessagesFragment()
                 R.id.nav_settings -> SettingsFragment()
                 else -> DashboardFragment()
@@ -110,12 +113,11 @@ class MainActivity : AppCompatActivity() {
                 // Synchronizacja BottomNav z przywróconym fragmentem
                 bottomNav.post {
                     when (lastTag) {
-                        "AdminDashboardFragment", "DashboardFragment" -> bottomNav.selectedItemId = R.id.nav_dashboard
+                        "AdminDashboardFragment", "DashboardFragment", "TeacherDashboardFragment" -> bottomNav.selectedItemId = R.id.nav_dashboard
                         "ScheduleFragment" -> bottomNav.selectedItemId = R.id.nav_schedule
                         "ManageUsersFragment" -> bottomNav.selectedItemId = R.id.nav_manage_users
                         "ManageScheduleFragment" -> bottomNav.selectedItemId = R.id.nav_manage_schedule
                         "ManageGradesFragment" -> bottomNav.selectedItemId = R.id.nav_manage_grades
-                        "TeacherClassesFragment" -> bottomNav.selectedItemId = R.id.nav_teacher_classes
                         "MessagesFragment" -> bottomNav.selectedItemId = R.id.nav_messages
                         "SettingsFragment" -> bottomNav.selectedItemId = R.id.nav_settings
                     }
@@ -217,7 +219,7 @@ class MainActivity : AppCompatActivity() {
             "teacher" -> {
                 bottomNav.visibility = View.VISIBLE
                 bottomNav.inflateMenu(R.menu.teacher_nav_menu)
-                DashboardFragment()
+                TeacherDashboardFragment()
             }
             "student" -> {
                 bottomNav.visibility = View.VISIBLE
@@ -261,13 +263,14 @@ class MainActivity : AppCompatActivity() {
         // Sync BottomNav
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
         val itemId = when (fragment) {
-            is AdminDashboardFragment, is DashboardFragment -> R.id.nav_dashboard
+            is AdminDashboardFragment -> R.id.nav_admin_dashboard
+            is TeacherDashboardFragment -> R.id.nav_teacher_dashboard
+            is DashboardFragment -> R.id.nav_dashboard
             is ScheduleFragment -> if (userRole == "admin") R.id.nav_manage_schedule else R.id.nav_schedule
             is GradesFragment -> R.id.nav_grades
             is ManageUsersFragment -> R.id.nav_manage_users
             is ManageGradesFragment -> R.id.nav_manage_grades
             is ManageScheduleFragment -> R.id.nav_manage_schedule
-            is TeacherClassesFragment -> R.id.nav_teacher_classes
             is MessagesFragment -> R.id.nav_messages
             is SettingsFragment -> R.id.nav_settings
             else -> null
@@ -277,23 +280,23 @@ class MainActivity : AppCompatActivity() {
             try {
                 if (bottomNav.selectedItemId != id && bottomNav.menu.findItem(id) != null) {
                     bottomNav.post {
-                        // Sprawdzamy ponownie wewnątrz posta, czy nadal potrzebna zmiana
                         if (bottomNav.selectedItemId != id) {
-                            // Usuwamy na chwilę listener, aby uniknąć pętli
                             bottomNav.setOnItemSelectedListener(null)
                             bottomNav.selectedItemId = id
-                            // Przywracamy listener po zmianie
                             bottomNav.setOnItemSelectedListener { item ->
                                 val nextFragment = when (item.itemId) {
                                     R.id.nav_dashboard, R.id.nav_admin_dashboard, R.id.nav_teacher_dashboard -> {
-                                        if (userRole == "admin") AdminDashboardFragment() else DashboardFragment()
+                                        when (userRole) {
+                                            "admin" -> AdminDashboardFragment()
+                                            "teacher" -> TeacherDashboardFragment()
+                                            else -> DashboardFragment()
+                                        }
                                     }
                                     R.id.nav_schedule -> ScheduleFragment()
                                     R.id.nav_grades -> GradesFragment()
                                     R.id.nav_manage_schedule -> ManageScheduleFragment()
                                     R.id.nav_manage_users -> ManageUsersFragment()
                                     R.id.nav_manage_grades -> ManageGradesFragment()
-                                    R.id.nav_teacher_classes -> TeacherClassesFragment()
                                     R.id.nav_messages -> MessagesFragment()
                                     R.id.nav_settings -> SettingsFragment()
                                     else -> DashboardFragment()
@@ -305,7 +308,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                // Elementu nie ma w menu - ignorujemy błąd synchronizacji
             }
         }
     }

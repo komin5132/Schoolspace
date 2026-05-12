@@ -17,9 +17,33 @@
             android:text="Zarządzaj Planem"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="16dp"
             android:textColor="@color/primary" />
 
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleMainMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            app:singleSelection="true"
+            app:checkedButton="@+id/btnModePermanent">
+            <Button
+                android:id="@+id/btnModePermanent"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Plan Stały"/>
+            <Button
+                android:id="@+id/btnModeChange"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Zmiany/Zastępstwa"/>
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <!-- Sekcja Wybór Klasy (Wspólna) -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -27,6 +51,7 @@
             app:cardElevation="0dp"
             app:strokeWidth="1dp"
             app:strokeColor="@color/primary">
+            <!-- ... (istniejąca zawartość wyboru klasy) ... -->
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -65,6 +90,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
+            android:id="@+id/txtLabelPermanent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Plan Stały"
@@ -74,6 +100,7 @@
             android:textColor="@color/primary" />
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardPermanentForm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardCornerRadius="16dp"
@@ -117,16 +144,18 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilLessonRoom"
                         android:layout_width="120dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
                         android:hint="Sala"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+                        app:errorEnabled="true"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
                         <AutoCompleteTextView
                             android:id="@+id/etLessonRoom"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="none" />
+                            android:inputType="text" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
@@ -152,6 +181,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
+            android:id="@+id/txtLabelChange"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Zastępstwa i Zmiany"
@@ -161,6 +191,7 @@
             android:textColor="@color/error" />
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardChangeForm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
@@ -189,7 +220,44 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:hint="Nowy Przedmiot / Informacja"
+                    android:hint="Godzina lekcyjna której dotyczy zmiana"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+                    <AutoCompleteTextView
+                        android:id="@+id/etChangeTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/toggleChangeType"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:singleSelection="true"
+                    app:checkedButton="@+id/btnTypeSubstitution">
+                    <Button
+                        android:id="@+id/btnTypeSubstitution"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="Zastępstwo"/>
+                    <Button
+                        android:id="@+id/btnTypeCancel"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="Odwołana"/>
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilChangeSubject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Nowy Przedmiot / Powód"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etChangeSubject"
