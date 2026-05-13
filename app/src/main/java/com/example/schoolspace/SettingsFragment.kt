@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -16,6 +18,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         val bgSun = view.findViewById<ImageView>(R.id.bgSun)
         val bgMoon = view.findViewById<ImageView>(R.id.bgMoon)
         
+        val btnPrivacy = view.findViewById<TextView>(R.id.btnPrivacyPolicy)
+        val btnTerms = view.findViewById<TextView>(R.id.btnTermsOfService)
+
         val prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
         
         var isDarkMode = prefs.getBoolean("dark_mode", 
@@ -38,6 +43,24 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             
             requireActivity().recreate()
         }
+
+        btnPrivacy.setOnClickListener {
+            showLegalDialog("Polityka Prywatności", 
+                "Twoje dane są u nas bezpieczne. Aplikacja SchoolSpace gromadzi jedynie informacje niezbędne do jej prawidłowego działania, takie jak adres e-mail i przynależność do klasy. Nie udostępniamy Twoich danych osobom trzecim bez Twojej wyraźnej zgody.")
+        }
+
+        btnTerms.setOnClickListener {
+            showLegalDialog("Regulamin Aplikacji", 
+                "1. Aplikacja służy do celów edukacyjnych i organizacyjnych szkoły.\n2. Użytkownik zobowiązuje się do korzystania z aplikacji zgodnie z przeznaczeniem.\n3. Zakazane jest wprowadzanie fałszywych danych lub próby nieautoryzowanego dostępu.")
+        }
+    }
+
+    private fun showLegalDialog(title: String, message: String) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("Zamknij", null)
+            .show()
     }
 
     private fun updateSwitchUI(container: FrameLayout, thumbBg: View, thumbIcon: ImageView, bgSun: ImageView, bgMoon: ImageView, isDarkMode: Boolean) {

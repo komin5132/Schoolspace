@@ -9,8 +9,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
 
 class ManageScheduleFragment : Fragment(R.layout.fragment_manage_schedule) {
-    
-    private var selectedLessonsList = mutableListOf<String>()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val etClass = view.findViewById<EditText>(R.id.etTargetClass)
@@ -87,7 +85,27 @@ class ManageScheduleFragment : Fragment(R.layout.fragment_manage_schedule) {
         for (i in 105..126) roomsList.add(i.toString())
         for (i in 201..215) roomsList.add(i.toString())
         roomsList.addAll(listOf("SG-1", "SG-2", "SG-3", "Informatyczna 1"))
-        etRoom.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, roomsList))
+        val roomAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, roomsList)
+        etRoom.setAdapter(roomAdapter)
+
+        val tilLessonRoom = view.findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.tilLessonRoom)
+        etRoom.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val input = s.toString().trim()
+                if (input.isNotEmpty() && !roomsList.contains(input)) {
+                    tilLessonRoom.error = "Wybrana sala nie istnieje"
+                } else {
+                    tilLessonRoom.error = null
+                }
+            }
+        })
+
+        // Automatyczne pokazywanie dropdowna przy kliknięciu
+        etRoom.setOnClickListener {
+            (it as? AutoCompleteTextView)?.showDropDown()
+        }
 
         // INTELIGENTNY DROPDOWN (Wariant 1)
         etDate.setOnClickListener {
@@ -188,18 +206,18 @@ class ManageScheduleFragment : Fragment(R.layout.fragment_manage_schedule) {
                         }
 
                         val lessons = weeklyDocs.documents.map { 
-                            val time = it.getString("time") ?: ""
-                            val permanentSubject = it.getString("subject") ?: ""
+                            val lesson = it.toObject(Lesson::class.java)!!
+                            val time = lesson.time
+                            val permanentSubject = lesson.subject
                             
                             // Sprawdź czy jest już zmiana dla tej godziny
-                            val change = changesMap[time]
-                            if (change != null) {
-                                val isCancelled = change.getBoolean("isCancelled") ?: false
-                                val newSubj = change.getString("newSubject") ?: "ZMIANA"
-                                if (isCancelled) {
+                            val changeDoc = changesMap[time]
+                            if (changeDoc != null) {
+                                val change = changeDoc.toObject(ScheduleChange::class.java)!!
+                                if (change.isCancelled) {
                                     "$time | [ODWOŁANA] $permanentSubject"
                                 } else {
-                                    "$time | [ZASTĘPSTWO: $newSubj]"
+                                    "$time | [ZASTĘPSTWO: ${change.newSubject}]"
                                 }
                             } else {
                                 "$time | $permanentSubject"

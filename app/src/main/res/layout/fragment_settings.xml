@@ -120,16 +120,24 @@
                 android:textColor="@color/primary" />
 
             <TextView
+                android:id="@+id/btnPrivacyPolicy"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"
                 android:text="Polityka prywatności"
                 android:textColor="@color/text_primary" />
 
             <TextView
+                android:id="@+id/btnTermsOfService"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"
                 android:text="Regulamin aplikacji"
                 android:textColor="@color/text_primary" />
 

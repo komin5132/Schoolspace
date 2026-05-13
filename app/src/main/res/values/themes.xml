@@ -3,18 +3,32 @@
     </style>
 
     <style name="Theme.SchoolSpace" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Kolory podstawowe -->
+        <!-- Core Colors -->
         <item name="colorPrimary">@color/primary</item>
-        <item name="android:colorBackground">@color/background</item>
-        <item name="android:textColor">@color/text_primary</item>
+        <item name="colorOnPrimary">@color/onPrimary</item>
+        <item name="colorPrimaryContainer">@color/primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/onPrimaryContainer</item>
 
-        <!-- Pasek systemowy (StatusBar) -->
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorOnSecondary">@color/onSecondary</item>
+
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/onError</item>
+
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/onSurface</item>
+        <item name="colorSurfaceVariant">@color/surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/onSurfaceVariant</item>
+
+        <!-- Status Bar & Navigation Bar -->
         <item name="android:statusBarColor">@color/primary</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
-
-        <!-- Pasek nawigacji dolnej systemowej -->
         <item name="android:navigationBarColor">@color/background</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+
+        <!-- Components styles -->
+        <item name="materialCardViewStyle">@style/Widget.Material3.CardView.Elevated</item>
     </style>
 
     <style name="Theme.SchoolSpace.Splash" parent="Theme.Material3.DayNight.NoActionBar">

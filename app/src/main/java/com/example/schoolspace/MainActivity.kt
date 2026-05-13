@@ -25,22 +25,6 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 
-// Modele danych
-data class Lesson(
-    val day: String = "",
-    val time: String = "",
-    val subject: String = "",
-    val room: String = "",
-    val teacher: String = ""
-)
-
-data class ScheduleChange(
-    val date: String = "",
-    val time: String = "",
-    val newSubject: String = "",
-    val isCancelled: Boolean = false
-)
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
@@ -236,15 +220,6 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, targetFragment)
             .commitAllowingStateLoss()
-    }
-
-    private fun loadInitialFragment(fragment: Fragment) {
-        val current = supportFragmentManager.findFragmentById(R.id.fragment_container)
-        if (current == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, fragment)
-                .commitAllowingStateLoss()
-        }
     }
 
     fun loadFragment(fragment: Fragment, addToBackStack: Boolean = true) {
@@ -463,13 +438,9 @@ class MainActivity : AppCompatActivity() {
         // 1. Słuchacz Ocen
         db.collection("users").document(uid).collection("grades")
             .addSnapshotListener { snapshots, e ->
-                if (e != null || snapshots == null) return@addSnapshotListener
-                if (isFirstGradeSnapshot) {
-                    isFirstGradeSnapshot = false
-                    return@addSnapshotListener
-                }
+                if (shouldSkipSnapshot(snapshots, e, "grade")) return@addSnapshotListener
                 
-                snapshots.documentChanges.forEach { dc ->
+                snapshots?.documentChanges?.forEach { dc ->
                     if (dc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
                         val g = dc.document.toObject(Grade::class.java)
                         NotificationHelper.showNotification(this, "Nowa ocena!", "${g.subject}: ${g.value}", 101)
@@ -481,13 +452,9 @@ class MainActivity : AppCompatActivity() {
         db.collection("messages")
             .whereEqualTo("receiverEmail", userEmail)
             .addSnapshotListener { snapshots, e ->
-                if (e != null || snapshots == null) return@addSnapshotListener
-                if (isFirstMessageSnapshot) {
-                    isFirstMessageSnapshot = false
-                    return@addSnapshotListener
-                }
+                if (shouldSkipSnapshot(snapshots, e, "message")) return@addSnapshotListener
 
-                snapshots.documentChanges.forEach { dc ->
+                snapshots?.documentChanges?.forEach { dc ->
                     if (dc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
                         val sender = dc.document.getString("senderEmail") ?: "Ktoś"
                         val subject = dc.document.getString("subject") ?: "Nowa wiadomość"
@@ -503,13 +470,9 @@ class MainActivity : AppCompatActivity() {
 
             db.collection("schedules").document(userClass).collection("changes")
                 .addSnapshotListener { snapshots, e ->
-                    if (e != null || snapshots == null) return@addSnapshotListener
-                    if (isFirstScheduleSnapshot) {
-                        isFirstScheduleSnapshot = false
-                        return@addSnapshotListener
-                    }
+                    if (shouldSkipSnapshot(snapshots, e, "schedule")) return@addSnapshotListener
 
-                    snapshots.documentChanges.forEach { dc ->
+                    snapshots?.documentChanges?.forEach { dc ->
                         if (dc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
                             val subj = dc.document.getString("newSubject") ?: "Zmiana"
                             val date = dc.document.getString("date") ?: ""
@@ -517,6 +480,16 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+        }
+    }
+
+    private fun shouldSkipSnapshot(snapshots: com.google.firebase.firestore.QuerySnapshot?, e: Exception?, type: String): Boolean {
+        if (e != null || snapshots == null) return true
+        return when (type) {
+            "grade" -> if (isFirstGradeSnapshot) { isFirstGradeSnapshot = false; true } else false
+            "message" -> if (isFirstMessageSnapshot) { isFirstMessageSnapshot = false; true } else false
+            "schedule" -> if (isFirstScheduleSnapshot) { isFirstScheduleSnapshot = false; true } else false
+            else -> false
         }
     }
 }

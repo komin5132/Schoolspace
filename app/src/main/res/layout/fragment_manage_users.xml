@@ -20,7 +20,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:hint="Szukaj użytkownika (email)..."
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         app:startIconDrawable="@android:drawable/ic_menu_search">
 
         <com.google.android.material.textfield.TextInputEditText

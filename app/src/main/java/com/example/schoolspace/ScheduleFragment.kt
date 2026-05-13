@@ -40,36 +40,40 @@ class ScheduleFragment : Fragment(R.layout.fragment_schedule) {
             targetClass = myClass
 
             if (role == "teacher" || role == "admin") {
-                tilSelector.visibility = View.VISIBLE
-                etSelector.setText(targetClass)
-                
-                etSelector.setOnItemClickListener { _, _, _, _ ->
-                    targetClass = etSelector.text.toString().trim()
-                    loadDailySchedule(view) // Zmiana z requireView() na view
-                }
-
-                // Dodaj TextWatcher, aby reagować na zmiany tekstu (jeśli użytkownik wpisze ręcznie)
-                etSelector.addTextChangedListener(object : android.text.TextWatcher {
-                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-                    override fun afterTextChanged(s: android.text.Editable?) {
-                        val newClass = s.toString().trim()
-                        if (newClass != targetClass) {
-                            targetClass = newClass
-                            loadDailySchedule(view)
-                        }
+                // Dla Admina zostawiamy wybór, dla Nauczyciela usuwamy
+                if (role == "admin") {
+                    tilSelector.visibility = View.VISIBLE
+                    etSelector.setText(targetClass)
+                    
+                    etSelector.setOnItemClickListener { _, _, _, _ ->
+                        targetClass = etSelector.text.toString().trim()
+                        loadDailySchedule(view)
                     }
-                })
 
-                // Opcjonalnie: automatyczne rozwijanie przy kliknięciu dla lepszego UX
-                etSelector.setOnClickListener {
-                    (it as? AutoCompleteTextView)?.showDropDown()
-                }
-                
-                db.collection("schedules").get().addOnSuccessListener { snapshots ->
-                    val classes = snapshots.documents.map { it.id }
-                    val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, classes)
-                    etSelector.setAdapter(adapter)
+                    etSelector.addTextChangedListener(object : android.text.TextWatcher {
+                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                        override fun afterTextChanged(s: android.text.Editable?) {
+                            val newClass = s.toString().trim()
+                            if (newClass != targetClass) {
+                                targetClass = newClass
+                                loadDailySchedule(view)
+                            }
+                        }
+                    })
+
+                    etSelector.setOnClickListener {
+                        (it as? AutoCompleteTextView)?.showDropDown()
+                    }
+                    
+                    db.collection("schedules").get().addOnSuccessListener { snapshots ->
+                        val classes = snapshots.documents.map { it.id }
+                        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, classes)
+                        etSelector.setAdapter(adapter)
+                    }
+                } else {
+                    // Rola nauczyciela - ukrywamy selektor, używamy przypisanej klasy (tutorskiej)
+                    tilSelector.visibility = View.GONE
                 }
             }
             

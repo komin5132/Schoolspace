@@ -1,6 +1,31 @@
 package com.example.schoolspace
 
 import com.google.firebase.Timestamp
+import java.util.Date
+
+data class Lesson(
+    val day: String = "",
+    val time: String = "",
+    val subject: String = "",
+    val room: String = "",
+    val teacher: String = ""
+)
+
+data class ScheduleChange(
+    val date: String = "",
+    val time: String = "",
+    val newSubject: String = "",
+    val isCancelled: Boolean = false
+)
+
+data class Reservation(
+    val room: String = "",
+    val topic: String = "",
+    val date: String = "",
+    val time: String = "",
+    val timestamp: Date = Date(),
+    val uid: String = ""
+)
 
 data class Grade(
     val id: String = "",

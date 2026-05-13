@@ -44,19 +44,24 @@ class RoomReservationFragment : Fragment(R.layout.fragment_room_reservation) {
         val roomAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, roomsList)
         etRoom.setAdapter(roomAdapter)
 
-        // Walidacja przy każdej zmianie tekstu
+        // Ścisła walidacja sali w czasie rzeczywistym
         etRoom.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
                 val input = s.toString().trim()
                 if (input.isNotEmpty() && !roomsList.contains(input)) {
-                    tilRoom.error = "Nieprawidłowa sala"
+                    tilRoom.error = "Wybrana sala nie istnieje w systemie"
                 } else {
                     tilRoom.error = null
                 }
             }
         })
+
+        // Automatyczne pokazywanie dropdowna przy kliknięciu dla lepszego UX
+        etRoom.setOnClickListener {
+            (it as? AutoCompleteTextView)?.showDropDown()
+        }
 
         val cal = Calendar.getInstance()
 
@@ -190,14 +195,13 @@ class RoomReservationFragment : Fragment(R.layout.fragment_room_reservation) {
                         doc.getString("topic") ?: "",
                         doc.getString("date") ?: "",
                         time,
-                        doc.getTimestamp("timestamp")?.toDate() ?: Date()
+                        doc.getTimestamp("timestamp")?.toDate() ?: Date(),
+                        doc.getString("uid") ?: ""
                     )
                 }.sortedByDescending { it.timestamp }
                 rv.adapter = ReservationAdapter(list)
             }
     }
-
-    data class Reservation(val room: String, val topic: String, val date: String, val time: String, val timestamp: Date)
 
     class ReservationAdapter(private val list: List<Reservation>) : RecyclerView.Adapter<ReservationAdapter.VH>() {
         class VH(v: View) : RecyclerView.ViewHolder(v) {
