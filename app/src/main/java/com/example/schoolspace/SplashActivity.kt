@@ -28,7 +28,8 @@ class SplashActivity : AppCompatActivity() {
             val auth = FirebaseAuth.getInstance()
             val currentUser = auth.currentUser
             
-            if (currentUser != null && (currentUser.isEmailVerified || currentUser.providerData.any { it.providerId == "google.com" })) {
+            if (currentUser != null) {
+                // Całkowite wyłączenie blokady weryfikacji e-mail dla wygody prezentacji/testów
                 startActivity(Intent(this, MainActivity::class.java))
             } else {
                 startActivity(Intent(this, LoginActivity::class.java))

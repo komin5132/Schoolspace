@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.example.schoolspace.BuildConfig
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -20,6 +21,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         
         val btnPrivacy = view.findViewById<TextView>(R.id.btnPrivacyPolicy)
         val btnTerms = view.findViewById<TextView>(R.id.btnTermsOfService)
+        android.util.Log.d("VersionCheck", "Version: ${BuildConfig.VERSION_NAME}")
 
         val prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
         

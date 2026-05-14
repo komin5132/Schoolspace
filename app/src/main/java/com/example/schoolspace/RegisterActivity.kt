@@ -52,16 +52,11 @@ class RegisterActivity : AppCompatActivity() {
                             if (uid != null) {
                                 db.collection("users").document(uid).set(userMap)
                                     .addOnSuccessListener {
-                                        user.sendEmailVerification()
-                                            ?.addOnCompleteListener { verifyTask ->
-                                                if (verifyTask.isSuccessful) {
-                                                    Toast.makeText(baseContext, 
-                                                        "Rejestracja udana! Sprawdź e-mail, aby aktywować konto.", 
-                                                        Toast.LENGTH_LONG).show()
-                                                    auth.signOut()
-                                                    finish()
-                                                }
-                                            }
+                                        Toast.makeText(baseContext, 
+                                            "Rejestracja udana! Możesz się teraz zalogować.", 
+                                            Toast.LENGTH_LONG).show()
+                                        auth.signOut()
+                                        finish()
                                     }
                                     .addOnFailureListener { e ->
                                         Toast.makeText(this, "Błąd zapisu danych: ${e.message}", Toast.LENGTH_SHORT).show()
