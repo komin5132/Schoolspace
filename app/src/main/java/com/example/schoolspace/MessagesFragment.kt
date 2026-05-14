@@ -1,7 +1,5 @@
 package com.example.schoolspace
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +11,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
@@ -27,6 +26,7 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
     private lateinit var auth: FirebaseAuth
     private lateinit var adapter: MessageAdapter
     private val messageList = mutableListOf<Message>()
+    private var isTrashView = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -37,16 +37,39 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
         val rv = view.findViewById<RecyclerView>(R.id.rvMessages)
         val txtEmpty = view.findViewById<TextView>(R.id.txtEmptyMessages)
         val fab = view.findViewById<FloatingActionButton>(R.id.fabCompose)
+        val btnTrash = view.findViewById<MaterialButton>(R.id.btnTrash)
+        val txtTitle = view.findViewById<TextView>(R.id.txtMessagesTitle)
 
         adapter = MessageAdapter(messageList) { message ->
-            markAsRead(message)
-            showDetails(message)
+            if (isTrashView) {
+                showTrashOptions(message)
+            } else {
+                markAsRead(message)
+                showDetails(message)
+            }
         }
 
         rv.layoutManager = LinearLayoutManager(context)
         rv.adapter = adapter
 
         fab.setOnClickListener { showComposeDialog() }
+
+        btnTrash.setOnClickListener {
+            isTrashView = !isTrashView
+            if (isTrashView) {
+                txtTitle.text = "Kosz"
+                btnTrash.text = "Wróć"
+                btnTrash.setIconResource(R.drawable.ic_back)
+                fab.visibility = View.GONE
+                checkAndDeleteOldTrash()
+            } else {
+                txtTitle.text = "Wiadomości"
+                btnTrash.text = "Kosz"
+                btnTrash.setIconResource(R.drawable.ic_trash)
+                fab.visibility = View.VISIBLE
+            }
+            loadMessages(txtEmpty)
+        }
 
         loadMessages(txtEmpty)
     }
@@ -56,17 +79,23 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
         
         db.collection("messages")
             .whereEqualTo("receiverEmail", userEmail)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
-                if (e != null) return@addSnapshotListener
-                
-                messageList.clear()
-                snapshots?.forEach { doc ->
-                    val msg = doc.toObject(Message::class.java).copy(id = doc.id)
-                    messageList.add(msg)
+                if (e != null) {
+                    android.util.Log.e("MessagesFragment", "Listen failed.", e)
+                    return@addSnapshotListener
                 }
                 
+                val allFetchedMessages = snapshots?.map { doc ->
+                    doc.toObject(Message::class.java).copy(id = doc.id)
+                } ?: emptyList()
+
+                // Filtrowanie i sortowanie po stronie aplikacji, aby uniknąć błędów indeksowania Firestore
+                messageList.clear()
+                val filtered = allFetchedMessages.filter { it.isDeleted == isTrashView }
+                messageList.addAll(filtered.sortedByDescending { it.timestamp })
+                
                 adapter.notifyDataSetChanged()
+                emptyView.text = if (isTrashView) "Kosz jest pusty" else "Brak wiadomości"
                 emptyView.visibility = if (messageList.isEmpty()) View.VISIBLE else View.GONE
             }
     }
@@ -82,10 +111,85 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
             .setTitle(message.subject)
             .setMessage("Od: ${message.senderEmail}\n\n${message.body}")
             .setPositiveButton("Zamknij", null)
+            .setNegativeButton("Usuń") { _, _ -> moveToTrash(message) }
             .setNeutralButton("Odpowiedz") { _, _ ->
                 showComposeDialog(message.senderEmail, "RE: ${message.subject}")
             }
             .show()
+    }
+
+    private fun moveToTrash(message: Message) {
+        db.collection("messages").document(message.id).update(
+            "isDeleted", true,
+            "deletedAt", com.google.firebase.Timestamp.now()
+        ).addOnSuccessListener {
+            Toast.makeText(context, "Przeniesiono do kosza", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showTrashOptions(message: Message) {
+        val dateStr = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(message.deletedAt?.toDate() ?: Date())
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_trash_details, null)
+        
+        val txtSubject = dialogView.findViewById<TextView>(R.id.txtTrashSubject)
+        val txtContent = dialogView.findViewById<TextView>(R.id.txtTrashContent)
+        val btnDelete = dialogView.findViewById<Button>(R.id.btnTrashDeleteForever)
+        val btnRestore = dialogView.findViewById<Button>(R.id.btnTrashRestore)
+        val btnClose = dialogView.findViewById<Button>(R.id.btnTrashClose)
+
+        txtSubject.text = message.subject
+        txtContent.text = "Od: ${message.senderEmail}\n\n${message.body}\n\n---\nPrzeniesiono do kosza: $dateStr"
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        btnDelete.setOnClickListener {
+            deletePermanently(message)
+            dialog.dismiss()
+        }
+        btnRestore.setOnClickListener {
+            restoreMessage(message)
+            dialog.dismiss()
+        }
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private fun restoreMessage(message: Message) {
+        db.collection("messages").document(message.id).update(
+            "isDeleted", false,
+            "deletedAt", null
+        ).addOnSuccessListener {
+            Toast.makeText(context, "Wiadomość przywrócona", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun deletePermanently(message: Message) {
+        db.collection("messages").document(message.id).delete()
+            .addOnSuccessListener {
+                Toast.makeText(context, "Wiadomość usunięta trwale", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun checkAndDeleteOldTrash() {
+        val userEmail = auth.currentUser?.email ?: return
+        val thirtyDaysAgo = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -30) }.time
+        
+        db.collection("messages")
+            .whereEqualTo("receiverEmail", userEmail)
+            .whereEqualTo("isDeleted", true)
+            .get().addOnSuccessListener { docs ->
+                docs.forEach { doc ->
+                    val deletedAt = doc.getTimestamp("deletedAt")?.toDate()
+                    if (deletedAt != null && deletedAt.before(thirtyDaysAgo)) {
+                        doc.reference.delete()
+                    }
+                }
+            }
     }
 
     private fun showComposeDialog(prefillEmail: String = "", prefillSubject: String = "") {
@@ -128,40 +232,13 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
             subject = subject,
             body = body,
             timestamp = com.google.firebase.Timestamp.now(),
-            isRead = false
+            isRead = false,
+            isDeleted = false
         )
 
-        // 1. Zapisz w systemie wewnętrznym aplikacji
         db.collection("messages").add(message)
             .addOnSuccessListener {
-                Toast.makeText(context, "Wysłano wiadomość wewnętrzną", Toast.LENGTH_SHORT).show()
-                
-                // 2. Wyślij e-mail automatycznie przez rozszerzenie Firebase (Opcja B)
-                sendAutomaticEmail(receiver, subject, body)
-            }
-            .addOnFailureListener {
-                Toast.makeText(context, "Błąd wysyłania", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun sendAutomaticEmail(receiver: String, subject: String, body: String) {
-        val emailData = hashMapOf(
-            "to" to receiver,
-            "message" to hashMapOf(
-                "subject" to subject,
-                "text" to body,
-                "html" to "<p>$body</p><br><br><i>Wysłano z aplikacji SchoolSpace</i>"
-            )
-        )
-
-        // Dodanie do kolekcji 'mail' triggeruje rozszerzenie Firebase "Trigger Email"
-        db.collection("mail").add(emailData)
-            .addOnSuccessListener {
-                Toast.makeText(context, "E-mail wysłany automatycznie", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener {
-                // Jeśli nie masz skonfigurowanego rozszerzenia, e-mail nie wyjdzie, 
-                // ale wiadomość w aplikacji nadal będzie widoczna.
+                Toast.makeText(context, "Wysłano wiadomość", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -192,7 +269,7 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
             val sdf = SimpleDateFormat("dd.MM HH:mm", Locale.getDefault())
             holder.date.text = sdf.format(m.timestamp.toDate())
 
-            holder.dot.visibility = if (m.isRead) View.GONE else View.VISIBLE
+            holder.dot.visibility = if (m.isRead || isTrashView) View.GONE else View.VISIBLE
             
             holder.itemView.setOnClickListener { onClick(m) }
         }

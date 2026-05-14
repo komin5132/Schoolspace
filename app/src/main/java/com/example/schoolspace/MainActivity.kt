@@ -147,7 +147,7 @@ class MainActivity : AppCompatActivity() {
                     val email = auth.currentUser?.email ?: ""
                     saveAccountLocally(email, newRole)
                     
-                    if (newRole != userRole) {
+                    if (newRole != userRole || supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
                         userRole = newRole
                         setupNavigation(bottomNav)
                     }

@@ -44,5 +44,7 @@ data class Message(
     val subject: String = "",
     val body: String = "",
     val timestamp: Timestamp = Timestamp.now(),
-    @field:JvmField val isRead: Boolean = false
+    @field:JvmField val isRead: Boolean = false,
+    @field:JvmField val isDeleted: Boolean = false,
+    val deletedAt: Timestamp? = null
 )
