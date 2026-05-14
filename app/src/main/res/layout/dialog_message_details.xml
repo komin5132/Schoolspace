@@ -13,7 +13,7 @@
         android:padding="24dp">
 
         <TextView
-            android:id="@+id/txtTrashSubject"
+            android:id="@+id/txtDetailsSubject"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Temat"
@@ -23,7 +23,7 @@
             android:layout_marginBottom="16dp" />
 
         <TextView
-            android:id="@+id/txtTrashContent"
+            android:id="@+id/txtDetailsContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Treść wiadomości..."
@@ -38,11 +38,11 @@
             android:gravity="start">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTrashDeleteForever"
+                android:id="@+id/btnDetailsDelete"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Usuń na zawsze"
+                android:text="Usuń"
                 android:textColor="?attr/colorError"
                 android:layout_marginBottom="-8dp" />
 
@@ -53,15 +53,15 @@
             android:layout_height="wrap_content">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTrashRestore"
+                android:id="@+id/btnDetailsReply"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
-                android:text="Przywróć" />
+                android:text="Odpowiedz" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTrashClose"
+                android:id="@+id/btnDetailsClose"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

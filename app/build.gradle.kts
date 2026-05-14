@@ -16,8 +16,8 @@ android {
         applicationId = "com.example.schoolspace"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "1.2.0"
+        versionCode = 12
+        versionName = "1.2.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

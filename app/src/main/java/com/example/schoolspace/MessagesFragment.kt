@@ -76,7 +76,7 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
 
     private fun loadMessages(emptyView: TextView) {
         val userEmail = auth.currentUser?.email ?: return
-        
+
         db.collection("messages")
             .whereEqualTo("receiverEmail", userEmail)
             .addSnapshotListener { snapshots, e ->
@@ -84,7 +84,7 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
                     android.util.Log.e("MessagesFragment", "Listen failed.", e)
                     return@addSnapshotListener
                 }
-                
+
                 val allFetchedMessages = snapshots?.map { doc ->
                     doc.toObject(Message::class.java).copy(id = doc.id)
                 } ?: emptyList()
@@ -93,7 +93,7 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
                 messageList.clear()
                 val filtered = allFetchedMessages.filter { it.isDeleted == isTrashView }
                 messageList.addAll(filtered.sortedByDescending { it.timestamp })
-                
+
                 adapter.notifyDataSetChanged()
                 emptyView.text = if (isTrashView) "Kosz jest pusty" else "Brak wiadomości"
                 emptyView.visibility = if (messageList.isEmpty()) View.VISIBLE else View.GONE
@@ -107,15 +107,34 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
     }
 
     private fun showDetails(message: Message) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(message.subject)
-            .setMessage("Od: ${message.senderEmail}\n\n${message.body}")
-            .setPositiveButton("Zamknij", null)
-            .setNegativeButton("Usuń") { _, _ -> moveToTrash(message) }
-            .setNeutralButton("Odpowiedz") { _, _ ->
-                showComposeDialog(message.senderEmail, "RE: ${message.subject}")
-            }
-            .show()
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_message_details, null)
+
+        val txtSubject = dialogView.findViewById<TextView>(R.id.txtDetailsSubject)
+        val txtContent = dialogView.findViewById<TextView>(R.id.txtDetailsContent)
+        val btnDelete = dialogView.findViewById<Button>(R.id.btnDetailsDelete)
+        val btnReply = dialogView.findViewById<Button>(R.id.btnDetailsReply)
+        val btnClose = dialogView.findViewById<Button>(R.id.btnDetailsClose)
+
+        txtSubject.text = message.subject
+        txtContent.text = "Od: ${message.senderEmail}\n\n${message.body}"
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        btnDelete.setOnClickListener {
+            moveToTrash(message)
+            dialog.dismiss()
+        }
+        btnReply.setOnClickListener {
+            showComposeDialog(message.senderEmail, "RE: ${message.subject}")
+            dialog.dismiss()
+        }
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun moveToTrash(message: Message) {
@@ -130,7 +149,7 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
     private fun showTrashOptions(message: Message) {
         val dateStr = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(message.deletedAt?.toDate() ?: Date())
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_trash_details, null)
-        
+
         val txtSubject = dialogView.findViewById<TextView>(R.id.txtTrashSubject)
         val txtContent = dialogView.findViewById<TextView>(R.id.txtTrashContent)
         val btnDelete = dialogView.findViewById<Button>(R.id.btnTrashDeleteForever)
@@ -178,7 +197,7 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
     private fun checkAndDeleteOldTrash() {
         val userEmail = auth.currentUser?.email ?: return
         val thirtyDaysAgo = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -30) }.time
-        
+
         db.collection("messages")
             .whereEqualTo("receiverEmail", userEmail)
             .whereEqualTo("isDeleted", true)
@@ -265,12 +284,12 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
             holder.sender.text = m.senderEmail
             holder.subject.text = m.subject
             holder.snippet.text = m.body
-            
+
             val sdf = SimpleDateFormat("dd.MM HH:mm", Locale.getDefault())
             holder.date.text = sdf.format(m.timestamp.toDate())
 
             holder.dot.visibility = if (m.isRead || isTrashView) View.GONE else View.VISIBLE
-            
+
             holder.itemView.setOnClickListener { onClick(m) }
         }
 
